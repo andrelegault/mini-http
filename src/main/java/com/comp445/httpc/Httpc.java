@@ -65,9 +65,23 @@ public class Httpc {
 
     public static void main(String[] args) {
         final int argLen = args.length;
-        if (argLen == 0 || args[0].equalsIgnoreCase("help")) {
+        if (argLen == 0) {
             System.out.println(Httpc.usageGeneral());
             System.exit(1);
+        } else {
+            if (args[0].equalsIgnoreCase("help")) {
+                if (args[1].equalsIgnoreCase("get")) {
+                    System.out.println(Httpc.usageGet());
+                    System.exit(1);
+                } else if (args[1].equalsIgnoreCase("post")) {
+                    System.out.println(Httpc.usagePost());
+                    System.exit(1);
+                }
+            } else {
+                System.out.println(Httpc.usageGeneral());
+                System.exit(1);
+            }
+
         }
 
         if (args[0].equalsIgnoreCase("get")) {
