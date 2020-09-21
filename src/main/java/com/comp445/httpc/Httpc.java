@@ -3,6 +3,7 @@ package com.comp445.httpc;
 import java.util.HashMap;
 
 public class Httpc {
+    //TODO: use https://github.com/apache/commons-cli to parse arguments.
     public static boolean isVerbose = false;
 
     public static String usageGeneral() {
