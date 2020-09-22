@@ -15,7 +15,12 @@ public class HttpcPost extends HttpcRequest {
         return "POST";
     }
 
+    private int getContentLength() {
+        return data != null ? data.length() : 0;
+    }
+
     protected void setDataHeaders() {
+        out.print("Content-Length: " + getContentLength() + "\r\n");
         if (headers != null) {
             out.print("data: " + data + "\r\n");
         }
