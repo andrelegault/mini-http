@@ -11,7 +11,7 @@ public class HttpcPost extends HttpcRequest {
     }
 
     @Override
-    protected String getRequestType() {
+    protected String getMethod() {
         return "POST";
     }
 

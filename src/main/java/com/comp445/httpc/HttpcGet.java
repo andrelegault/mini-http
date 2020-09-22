@@ -9,7 +9,7 @@ public class HttpcGet extends HttpcRequest {
     }
 
     @Override
-    protected String getRequestType() {
+    protected String getMethod() {
         return "GET";
     }
 

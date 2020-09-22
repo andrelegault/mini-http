@@ -30,7 +30,7 @@ public abstract class HttpcRequest {
 
     protected abstract void setDataHeaders();
 
-    protected abstract String getRequestType();
+    protected abstract String getMethod();
 
     protected String connect() {
         try {
@@ -79,7 +79,7 @@ public abstract class HttpcRequest {
     }
 
     protected void setRequestHeaders() {
-        out.printf("%s %s%s  HTTP/1.1\r%n", getRequestType(), host.url.getPath(), getQueryIfPresent());
+        out.printf("%s %s%s  HTTP/1.1\r%n", getMethod(), host.url.getPath(), getQueryIfPresent());
         out.printf("Host: " + host.url.getHost() + "\r%n");
         out.printf("Upgrade-Insecure-Requests: 1\r%n");
         out.printf("Connection: Close\r%n");
