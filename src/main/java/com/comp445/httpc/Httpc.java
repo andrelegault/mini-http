@@ -34,7 +34,6 @@ public class Httpc {
     protected HttpcRequest req;
 
     // TODO: use https://github.com/apache/commons-cli to parse arguments.
-    public static boolean isVerbose = false;
 
     public Httpc(final String[] args) {
         parse(args);
@@ -80,9 +79,10 @@ public class Httpc {
             try {
                 if (action.equalsIgnoreCase("get")) {
                     final CommandLine cmdLine = parser.parse(options, args);
+                    final boolean verbose = cmdLine.hasOption("v");
                     final Properties properties = cmdLine.getOptionProperties("h");
                     final Map<String, String> headers = new HashMap<String, String>((Map) properties);
-                    this.req = new HttpcGet(args[argLen - 1], headers);
+                    this.req = new HttpcGet(args[argLen - 1], headers, verbose);
                 } else if (action.equalsIgnoreCase("post")) {
                     final Option optDataString = Option.builder("d").required(true).hasArg(true)
                             .desc("JSON string request body").build();
@@ -91,12 +91,13 @@ public class Httpc {
                     options.addOption(optDataString);
                     options.addOption(optDataFile);
                     final CommandLine cmdLine = parser.parse(options, args);
+                    final boolean verbose = cmdLine.hasOption("v");
                     if (cmdLine.hasOption("d") ^ cmdLine.hasOption("f")) {
                         final Properties properties = cmdLine.getOptionProperties("h");
                         final Map<String, String> headers = new HashMap<String, String>((Map) properties);
                         String data = cmdLine.hasOption("d") ? cmdLine.getOptionValue("d")
                                 : cmdLine.getOptionValue("f");
-                        this.req = new HttpcPost(args[argLen - 1], headers, data);
+                        this.req = new HttpcPost(args[argLen - 1], headers, data, verbose);
                     } else {
                         System.out.println(usagePost);
                         System.exit(1);

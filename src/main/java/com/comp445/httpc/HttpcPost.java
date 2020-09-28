@@ -5,8 +5,8 @@ import java.util.Map;
 public class HttpcPost extends HttpcRequest {
     private String data;
 
-    public HttpcPost(String host, Map<String, String> headers, String data) {
-        super(host, headers);
+    public HttpcPost(final String host, Map<String, String> headers, final String data, final boolean verbose) {
+        super(host, headers, verbose);
         this.data = data;
     }
 

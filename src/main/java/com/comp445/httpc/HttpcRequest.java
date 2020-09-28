@@ -21,11 +21,13 @@ public abstract class HttpcRequest {
     protected Socket socket;
     protected BufferedReader in;
     protected PrintWriter out;
+    protected boolean verbose;
     protected final int HTTP_PORT = 80;
 
-    protected HttpcRequest(final String hostString, final Map<String, String> headers) {
+    protected HttpcRequest(final String hostString, final Map<String, String> headers, final boolean verbose) {
         this.host = new Host(hostString);
         this.headers = headers;
+        this.verbose = verbose;
     }
 
     protected abstract void setDataHeaders();
@@ -43,7 +45,7 @@ public abstract class HttpcRequest {
             out.printf("\r%n");
 
             final String data = readData();
-            if (Httpc.isVerbose) {
+            if (verbose) {
                 System.out.println(data);
             }
             close();
@@ -74,16 +76,22 @@ public abstract class HttpcRequest {
         socket.close();
     }
 
-    protected String getQueryIfPresent() {
-        return (!host.url.getQuery().equals("") && !host.url.getQuery().equals("/")) ? "?" + host.url.getQuery() : "";
+    protected String getQueryOrEmptyString() {
+        final String query = host.url.getQuery();
+        return (query != null && !query.equals("") && !query.equals("/")) ? "?" + host.url.getQuery() : "";
     }
 
     protected void setRequestHeaders() {
-        out.printf("%s %s%s  HTTP/1.1\r%n", getMethod(), host.url.getPath(), getQueryIfPresent());
+        out.printf("%s %s%s  HTTP/1.1\r%n", getMethod(), host.url.getPath(), getQueryOrEmptyString());
         out.printf("Host: " + host.url.getHost() + "\r%n");
         out.printf("Upgrade-Insecure-Requests: 1\r%n");
         out.printf("Connection: Close\r%n");
         out.printf("DNT: 1\r%n");
+        if (headers != null && !headers.isEmpty()) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                out.printf("%s: %s", entry.getKey(), entry.getValue());
+            }
+        }
     }
 
 }
