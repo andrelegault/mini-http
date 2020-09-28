@@ -1,9 +1,17 @@
 package com.comp445.httpc;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 
 public class Httpc {
-    //TODO: use https://github.com/apache/commons-cli to parse arguments.
+    // TODO: use https://github.com/apache/commons-cli to parse arguments.
     public static boolean isVerbose = false;
 
     public static String usageGeneral() {
@@ -30,41 +38,7 @@ public class Httpc {
                 .concat("Use \"httpc help [command]\" for more information about a command.");
     }
 
-    public static HashMap<String, String> extractHeaders(String[] args) {
-        final HashMap<String, String> extractedArgs = new HashMap<String, String>();
-        for (int i = 1; i < args.length; i++) {
-            if (args[i].equals("-h") && Httpc.isValidHeader(args[i + 1])) {
-                extractedArgs.put(args[i], args[i + 1]);
-                i++;
-            }
-        }
-        return extractedArgs;
-    }
-
-    public static String extractData(String[] args) {
-        for (int i = 1; i < args.length; i++) {
-            if (args[i].equals("-d")) {
-                return args[i + 1];
-            }
-        }
-        return null;
-    }
-
-    public static String extractFilename(String[] args) {
-        for (int i = 1; i < args.length; i++) {
-            if (args[i].equals("-f")) {
-                return args[i + 1];
-            }
-        }
-        return null;
-    }
-
-    public static boolean isValidHeader(String value) {
-        String[] keyVal = value.split(":");
-        return keyVal.length == 2;
-    }
-
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         final int argLen = args.length;
         if (argLen == 0) {
             System.out.println(Httpc.usageGeneral());
@@ -85,54 +59,60 @@ public class Httpc {
 
         }
 
-        if (args[0].equalsIgnoreCase("get")) {
-            if (argLen < 2) {
-                System.out.println(Httpc.usageGet());
-                System.exit(1);
-            } else {
-                String endpoint = "";
-                for (int i = 0; i < argLen; i++) {
-                    if (args[i].equals("-v")) {
-                        Httpc.isVerbose = true;
-                    } else if (i == (argLen - 1)) {
-                        endpoint = args[i];
-                    } else if (args[i].equals("-d") || args[i].equals("-f")) {
-                        System.out.println(Httpc.usageGet());
+        final String action = args[0];
+
+        if (action.equalsIgnoreCase("get") || action.equalsIgnoreCase("post")) {
+            final CommandLineParser parser = new DefaultParser();
+            final Options options = new Options();
+            final Option optVerbose = Option.builder("v").required(false).hasArg(false)
+                    .desc("Makes the program verbose").build();
+            options.addOption(optVerbose);
+            final Option optHeaders = Option.builder("h").required(false).hasArg(true).hasArgs().valueSeparator(':')
+                    .desc("Headers").build();
+            options.addOption(optHeaders);
+            try {
+                if (action.equalsIgnoreCase("get")) {
+                    final CommandLine cmdLine = parser.parse(options, args);
+                    final Properties properties = cmdLine.getOptionProperties("h");
+                    final Map<String, String> headers = new HashMap<String, String>((Map) properties);
+                    final HttpcGet get = new HttpcGet(args[argLen - 1], headers);
+                    get.connect();
+                } else if (action.equalsIgnoreCase("post")) {
+                    final Option optDataString = Option.builder("d").required(true).hasArg(true)
+                            .desc("JSON string request body").build();
+                    final Option optDataFile = Option.builder("f").required(true).hasArg(true).desc("File request body")
+                            .build();
+                    options.addOption(optDataString);
+                    options.addOption(optDataFile);
+                    final CommandLine cmdLine = parser.parse(options, args);
+                    if (cmdLine.hasOption("d") || cmdLine.hasOption("f")) {
+                        if (cmdLine.hasOption("d") && cmdLine.hasOption("f")) {
+                            System.out.println(Httpc.usagePost());
+                            System.exit(1);
+                        }
+                        final Properties properties = cmdLine.getOptionProperties("h");
+                        final Map<String, String> headers = new HashMap<String, String>((Map) properties);
+                        String data;
+                        if (cmdLine.hasOption("d")) {
+                            data = cmdLine.getOptionValue("d");
+                        } else {
+                            data = cmdLine.getOptionValue("f");
+                        }
+                        final HttpcPost post = new HttpcPost(args[argLen - 1], headers, data);
+                        post.connect();
+                    } else {
+                        System.out.println(Httpc.usagePost());
                         System.exit(1);
                     }
-                }
-                final HashMap<String, String> headers = Httpc.extractHeaders(args);
-                final Host host = new Host(endpoint);
-                HttpcGet get = new HttpcGet(host, headers);
-                get.connect();
-            }
-
-        } else if (args[0].equalsIgnoreCase("post")) {
-            if (argLen < 2) {
-                System.out.println(Httpc.usagePost());
-            } else {
-                String endpoint = "";
-                for (int i = 0; i < argLen; i++) {
-                    if (args[i].equals("-v")) {
-                        Httpc.isVerbose = true;
-                    } else if (i == (argLen - 1)) {
-                        endpoint = args[i];
-                    }
-                }
-                final HashMap<String, String> headers = Httpc.extractHeaders(args);
-                final String data = Httpc.extractData(args);
-                final String file = Httpc.extractFilename(args);
-                if (file != null && !data.isEmpty()) {
-                    System.out.println(Httpc.usagePost());
+                } else {
+                    System.out.println(Httpc.usageGeneral());
                     System.exit(1);
                 }
-                final Host host = new Host(endpoint);
-                HttpcPost post = new HttpcPost(host, headers, data);
-                post.connect();
+            } catch (Exception e) {
+                System.out.println(Httpc.usageGeneral());
+                System.exit(1);
             }
-        } else {
-            System.out.println(Httpc.usageGeneral());
-            System.exit(1);
         }
+
     }
 }
