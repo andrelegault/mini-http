@@ -20,9 +20,9 @@ public class HttpcPost extends HttpcRequest {
     }
 
     protected void setDataHeaders() {
-        out.print("Content-Length: " + getContentLength() + "\r\n");
-        if (headers != null) {
-            out.print("data: " + data + "\r\n");
+        out.printf("Content-Length: %d\r%n", getContentLength());
+        if (data != null) {
+            out.printf("data: %s\r%n", data);
         }
     }
 
