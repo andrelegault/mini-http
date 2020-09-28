@@ -115,6 +115,8 @@ public class Httpc {
     }
 
     public static void main(final String[] args) {
-        new Httpc(args);
+        final String[] args2 = {"get", "-v", "http://httpbin.org/get?course=networking&assignment=1"};
+        final Httpc test = new Httpc(args2);
+        test.req.connect();
     }
 }

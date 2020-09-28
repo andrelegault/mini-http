@@ -18,7 +18,7 @@ public class HttpcRequestTest {
 
     @Test
     public void httpcGetTest() {
-        HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", null);
+        HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", null, true);
         String res = testGet.connect();
         assertFalse("Bad request!", res.contains("400 Bad Request"));
     }
