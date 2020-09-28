@@ -31,12 +31,22 @@ public class Httpc {
             .concat("   help    prints this screen.\n\n")
             .concat("Use \"httpc help [command]\" for more information about a command.");
     final Set<String> validActions = Set.of("post", "get");
-    protected HttpcRequest req;
 
-    // TODO: use https://github.com/apache/commons-cli to parse arguments.
+    private final CommandLineParser parser = new DefaultParser();
+    private final Options options = new Options();
+    private CommandLine cmdLine;
+    private String[] args;
+
+    protected HttpcRequest req;
+    protected boolean verbose = false;
+    protected Map<String, String> headers = new HashMap<String, String>();
+    protected String data;
+    protected String action;
+    protected String target;
 
     public Httpc(final String[] args) {
-        parse(args);
+        this.args = args;
+        parse();
     }
 
     private boolean isRequest(final String check) {
@@ -47,14 +57,68 @@ public class Httpc {
         }
     }
 
-    private void parse(String[] args) {
+    private void preparePostOptions() {
+        final Option optDataString = Option.builder("d").required(true).hasArg(true).desc("JSON string request body")
+                .build();
+        final Option optDataFile = Option.builder("f").required(true).hasArg(true).desc("File request body").build();
+        options.addOption(optDataString);
+        options.addOption(optDataFile);
+    }
+
+    /**
+     * Sets the verbose and headers options.
+     */
+    private void prepareCommonOptions() {
+        final Option optVerbose = Option.builder("v").required(false).hasArg(false).desc("Makes the program verbose")
+                .build();
+        final Option optHeaders = Option.builder("h").required(false).hasArg(true).hasArgs().valueSeparator(':')
+                .desc("Headers").build();
+        options.addOption(optVerbose);
+        options.addOption(optHeaders);
+    }
+
+    /**
+     * Sets the `headers` variable.
+     */
+    private void collectHeaders() {
+        final Properties properties = cmdLine.getOptionProperties("h");
+        this.headers = new HashMap<String, String>((Map) properties);
+    }
+
+    /**
+     * Sets the `data` variable.
+     */
+    private void collectData() {
+        this.data = cmdLine.hasOption("d") ? cmdLine.getOptionValue("d") : cmdLine.getOptionValue("f");
+    }
+
+    /**
+     * Sets the `verbose` variable.
+     */
+    private void collectVerbose() {
+        this.verbose = cmdLine.hasOption("v");
+    }
+
+    /**
+     * Sets the `target` variable.
+     */
+    private void setTarget() {
+        this.target = args[args.length - 1];
+    }
+
+    /**
+     * Parses the arguments passed, and sets member variables accordingly.
+     * 
+     * @param args Arguments passed.
+     */
+    private void parse() {
         final int argLen = args.length;
         if (argLen == 0) {
             System.out.println(usageGeneral);
             System.exit(1);
         }
-        final String action = args[0];
-        if (action.equalsIgnoreCase("help")) {
+        this.action = args[0];
+        if (this.action.equalsIgnoreCase("help")) {
             if (args[1].equalsIgnoreCase("get")) {
                 System.out.println(usageGet);
                 System.exit(1);
@@ -67,37 +131,20 @@ public class Httpc {
             }
         }
 
-        if (isRequest(action)) {
-            final CommandLineParser parser = new DefaultParser();
-            final Options options = new Options();
-            final Option optVerbose = Option.builder("v").required(false).hasArg(false)
-                    .desc("Makes the program verbose").build();
-            options.addOption(optVerbose);
-            final Option optHeaders = Option.builder("h").required(false).hasArg(true).hasArgs().valueSeparator(':')
-                    .desc("Headers").build();
-            options.addOption(optHeaders);
+        if (isRequest(this.action)) {
             try {
+                prepareCommonOptions();
                 if (action.equalsIgnoreCase("get")) {
-                    final CommandLine cmdLine = parser.parse(options, args);
-                    final boolean verbose = cmdLine.hasOption("v");
-                    final Properties properties = cmdLine.getOptionProperties("h");
-                    final Map<String, String> headers = new HashMap<String, String>((Map) properties);
-                    this.req = new HttpcGet(args[argLen - 1], headers, verbose);
+                    cmdLine = parser.parse(options, args);
+                    collectVerbose();
+                    collectHeaders();
                 } else if (action.equalsIgnoreCase("post")) {
-                    final Option optDataString = Option.builder("d").required(true).hasArg(true)
-                            .desc("JSON string request body").build();
-                    final Option optDataFile = Option.builder("f").required(true).hasArg(true).desc("File request body")
-                            .build();
-                    options.addOption(optDataString);
-                    options.addOption(optDataFile);
-                    final CommandLine cmdLine = parser.parse(options, args);
-                    final boolean verbose = cmdLine.hasOption("v");
+                    preparePostOptions();
+                    this.cmdLine = parser.parse(options, args);
                     if (cmdLine.hasOption("d") ^ cmdLine.hasOption("f")) {
-                        final Properties properties = cmdLine.getOptionProperties("h");
-                        final Map<String, String> headers = new HashMap<String, String>((Map) properties);
-                        String data = cmdLine.hasOption("d") ? cmdLine.getOptionValue("d")
-                                : cmdLine.getOptionValue("f");
-                        this.req = new HttpcPost(args[argLen - 1], headers, data, verbose);
+                        collectVerbose();
+                        collectHeaders();
+                        collectData();
                     } else {
                         System.out.println(usagePost);
                         System.exit(1);
@@ -114,8 +161,16 @@ public class Httpc {
         }
     }
 
+    private void run() {
+        if (this.action.equalsIgnoreCase("get")) {
+            this.req = new HttpcGet(this.target, headers, verbose);
+        } else if (this.action.equalsIgnoreCase("post")) {
+            this.req = new HttpcPost(this.target, this.headers, this.data, this.verbose);
+        }
+    }
+
     public static void main(final String[] args) {
-        final String[] args2 = {"get", "-v", "http://httpbin.org/get?course=networking&assignment=1"};
+        final String[] args2 = { "get", "-v", "http://httpbin.org/get?course=networking&assignment=1" };
         final Httpc test = new Httpc(args2);
         test.req.connect();
     }
