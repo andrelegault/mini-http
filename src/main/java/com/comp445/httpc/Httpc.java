@@ -14,6 +14,14 @@ public class Httpc {
     // TODO: use https://github.com/apache/commons-cli to parse arguments.
     public static boolean isVerbose = false;
 
+    public static boolean isRequest(final String check) {
+        if (check != null && !check.isEmpty() && (check.equalsIgnoreCase("get") || check.equalsIgnoreCase("post"))) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public static String usageGeneral() {
         return "Usage:\n".concat("   httpc command [arguments]\n").concat("The commands are:\n")
                 .concat("   get     executes a HTTP GET request and prints the response.\n")
@@ -23,14 +31,14 @@ public class Httpc {
     }
 
     public static String usageGet() {
-        return "httpc help get\n".concat("   usage: httpc get [-v] [-h key:value] URL\n")
+        return "httpc help get\n".concat("   usage: httpc get [-v] [-h key:value]* URL\n")
                 .concat("Get executes a HTTP GET request for a given URL.\n")
                 .concat("   -v      Prints the detail of the response such as protocol, status, and headers.\n")
                 .concat("   -h key:value    Associates headers to HTTP Request with the format 'key:value'.");
     }
 
     public static String usagePost() {
-        return "httpc help post\n".concat("    usage: httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL\n")
+        return "httpc help post\n".concat("    usage: httpc post [-v] [-h key:value]* [-d inline-data] [-f file] URL\n")
                 .concat("Post executes a HTTP POST request for a given URL with inline data or from file.\n")
                 .concat("   get     executes a HTTP GET request and prints the response.\n")
                 .concat("   post    executes a HTTP POST request and prints the response.\n")
@@ -43,25 +51,22 @@ public class Httpc {
         if (argLen == 0) {
             System.out.println(Httpc.usageGeneral());
             System.exit(1);
-        } else {
-            if (args[0].equalsIgnoreCase("help")) {
-                if (args[1].equalsIgnoreCase("get")) {
-                    System.out.println(Httpc.usageGet());
-                    System.exit(1);
-                } else if (args[1].equalsIgnoreCase("post")) {
-                    System.out.println(Httpc.usagePost());
-                    System.exit(1);
-                }
+        }
+        final String action = args[0];
+        if (action.equalsIgnoreCase("help")) {
+            if (args[1].equalsIgnoreCase("get")) {
+                System.out.println(Httpc.usageGet());
+                System.exit(1);
+            } else if (args[1].equalsIgnoreCase("post")) {
+                System.out.println(Httpc.usagePost());
+                System.exit(1);
             } else {
                 System.out.println(Httpc.usageGeneral());
                 System.exit(1);
             }
-
         }
 
-        final String action = args[0];
-
-        if (action.equalsIgnoreCase("get") || action.equalsIgnoreCase("post")) {
+        if (Httpc.isRequest(action)) {
             final CommandLineParser parser = new DefaultParser();
             final Options options = new Options();
             final Option optVerbose = Option.builder("v").required(false).hasArg(false)
@@ -85,19 +90,11 @@ public class Httpc {
                     options.addOption(optDataString);
                     options.addOption(optDataFile);
                     final CommandLine cmdLine = parser.parse(options, args);
-                    if (cmdLine.hasOption("d") || cmdLine.hasOption("f")) {
-                        if (cmdLine.hasOption("d") && cmdLine.hasOption("f")) {
-                            System.out.println(Httpc.usagePost());
-                            System.exit(1);
-                        }
+                    if (cmdLine.hasOption("d") ^ cmdLine.hasOption("f")) {
                         final Properties properties = cmdLine.getOptionProperties("h");
                         final Map<String, String> headers = new HashMap<String, String>((Map) properties);
-                        String data;
-                        if (cmdLine.hasOption("d")) {
-                            data = cmdLine.getOptionValue("d");
-                        } else {
-                            data = cmdLine.getOptionValue("f");
-                        }
+                        String data = cmdLine.hasOption("d") ? cmdLine.getOptionValue("d")
+                                : cmdLine.getOptionValue("f");
                         final HttpcPost post = new HttpcPost(args[argLen - 1], headers, data);
                         post.connect();
                     } else {
@@ -109,6 +106,7 @@ public class Httpc {
                     System.exit(1);
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 System.out.println(Httpc.usageGeneral());
                 System.exit(1);
             }
