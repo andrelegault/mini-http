@@ -23,8 +23,8 @@ public abstract class HttpcRequest {
     protected PrintWriter out;
     protected final int HTTP_PORT = 80;
 
-    protected HttpcRequest(final Host host, final Map<String, String> headers) {
-        this.host = host;
+    protected HttpcRequest(final String hostString, final Map<String, String> headers) {
+        this.host = new Host(hostString);
         this.headers = headers;
     }
 
@@ -49,11 +49,11 @@ public abstract class HttpcRequest {
             close();
             return data;
         } catch (final MalformedURLException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         } catch (final UnknownHostException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         } catch (final IOException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
         return "An error occurred!";
     }
