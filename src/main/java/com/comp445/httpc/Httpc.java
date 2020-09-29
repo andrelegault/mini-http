@@ -59,9 +59,9 @@ public class Httpc {
     }
 
     private void preparePostOptions() {
-        final Option optDataString = Option.builder("d").required(true).hasArg(true).desc("JSON string request body")
+        final Option optDataString = Option.builder("d").required(false).hasArg(true).desc("JSON string request body")
                 .build();
-        final Option optDataFile = Option.builder("f").required(true).hasArg(true).desc("File request body").build();
+        final Option optDataFile = Option.builder("f").required(false).hasArg(true).desc("File request body").build();
         options.addOption(optDataString);
         options.addOption(optDataFile);
     }
@@ -113,7 +113,7 @@ public class Httpc {
      * @param args Arguments passed.
      * @throws ParseException
      */
-    private void parse() throws ParseException {
+    private void parse() throws Exception {
         final int argLen = args.length;
         if (argLen == 0) {
             System.err.println(usageGeneral);
@@ -145,6 +145,7 @@ public class Httpc {
                     collectData();
                 } else {
                     System.err.println(usagePost);
+                    throw new Exception("Missing option!");
                 }
             } else {
                 System.err.println(usageGeneral);
