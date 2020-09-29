@@ -10,6 +10,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 public class Httpc {
     private String usageGeneral = "Usage:\n".concat("   httpc command [arguments]\n").concat("The commands are:\n")
@@ -44,7 +45,7 @@ public class Httpc {
     protected String action;
     protected String target;
 
-    public Httpc(final String[] args) {
+    public Httpc(final String[] args) throws ParseException {
         this.args = args;
         parse();
     }
@@ -110,8 +111,9 @@ public class Httpc {
      * Parses the arguments passed, and sets member variables accordingly.
      * 
      * @param args Arguments passed.
+     * @throws ParseException
      */
-    private void parse() {
+    private void parse() throws ParseException {
         final int argLen = args.length;
         if (argLen == 0) {
             System.out.println(usageGeneral);
@@ -132,30 +134,24 @@ public class Httpc {
         }
 
         if (isRequest(this.action)) {
-            try {
-                prepareCommonOptions();
-                setTarget();
-                if (action.equalsIgnoreCase("get")) {
-                    cmdLine = parser.parse(options, args);
+            prepareCommonOptions();
+            setTarget();
+            if (action.equalsIgnoreCase("get")) {
+                cmdLine = parser.parse(options, args);
+                collectVerbose();
+                collectHeaders();
+            } else if (action.equalsIgnoreCase("post")) {
+                preparePostOptions();
+                this.cmdLine = parser.parse(options, args);
+                if (cmdLine.hasOption("d") ^ cmdLine.hasOption("f")) {
                     collectVerbose();
                     collectHeaders();
-                } else if (action.equalsIgnoreCase("post")) {
-                    preparePostOptions();
-                    this.cmdLine = parser.parse(options, args);
-                    if (cmdLine.hasOption("d") ^ cmdLine.hasOption("f")) {
-                        collectVerbose();
-                        collectHeaders();
-                        collectData();
-                    } else {
-                        System.out.println(usagePost);
-                        System.exit(1);
-                    }
+                    collectData();
                 } else {
-                    System.out.println(usageGeneral);
+                    System.out.println(usagePost);
                     System.exit(1);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } else {
                 System.out.println(usageGeneral);
                 System.exit(1);
             }
