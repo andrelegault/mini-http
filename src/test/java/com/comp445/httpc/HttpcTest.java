@@ -3,7 +3,6 @@ package com.comp445.httpc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.apache.commons.cli.Exception;
 import org.junit.jupiter.api.Test;
 
 public class HttpcTest {
