@@ -1,5 +1,8 @@
 package com.comp445.httpc;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -11,6 +14,8 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+
+// import org.json.JSONObject;
 
 public class Httpc {
     // General usage instructions
@@ -122,14 +127,22 @@ public class Httpc {
 
     /**
      * Sets the `data` variable.
+     * 
+     * @throws IOException
+     */
+    private void collectData() throws IOException {
+        this.data = cmdLine.hasOption("d") ? cmdLine.getOptionValue("d")
+                : loadFileContents(Path.of(cmdLine.getOptionValue("f")));
+    }
+
     /**
      * Loads a file's contents into a String.
      * 
      * @return String Contents of the file.
      * @throws IOException
      */
-    private void collectData() {
-        this.data = cmdLine.hasOption("d") ? cmdLine.getOptionValue("d") : cmdLine.getOptionValue("f");
+    private String loadFileContents(Path filePath) throws IOException {
+        return Files.readString(filePath);
     }
 
     /**
@@ -184,7 +197,7 @@ public class Httpc {
                     collectData();
                 } else {
                     System.err.println(usagePost);
-                    throw new Exception("Missing option!");
+                    throw new Exception("Invalid use of -d or -f!");
                 }
             } else {
                 System.err.println(usageGeneral);

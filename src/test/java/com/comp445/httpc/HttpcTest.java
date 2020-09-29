@@ -87,6 +87,34 @@ public class HttpcTest {
     public void testHttpcPostWithInvalidData() {
         final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1'", "-f", "test.txt",
                 "http://httpbin.org/get?course=networking&assignment=1" };
-        assertThrows(Exception.class, () -> new Httpc(args));
+        assertThrows(Exception.class, () -> new Httpc(args), "Invalid use of -d or -f!");
+    }
+
+    @Test
+    public void testHttpcPostWithValidFileData() {
+        final String[] args = { "post", "-v", "-f", "test.txt",
+                "http://httpbin.org/get?course=networking&assignment=1" };
+        Httpc test;
+        try {
+            test = new Httpc(args);
+            assertEquals("1234test\n", test.data);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testHttpcPostWithValidStringData() {
+        final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1'",
+                "http://httpbin.org/get?course=networking&assignment=1" };
+        Httpc test;
+        try {
+            test = new Httpc(args);
+            assertEquals("'{ \"Assignment\": 1'", test.data);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 }
