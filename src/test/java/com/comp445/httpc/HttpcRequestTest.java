@@ -1,8 +1,7 @@
 package com.comp445.httpc;
 
-import static org.junit.Assert.*;
-
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class HttpcRequestTest {
 
@@ -16,10 +15,10 @@ public class HttpcRequestTest {
     // assertNotEquals(res, null);
     // }
 
-    @Test
-    public void httpcGetTest() {
-        HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", null, true);
-        String res = testGet.connect();
-        assertFalse("Bad request!", res.contains("400 Bad Request"));
-    }
+    // @Test
+    // public void httpcGetTest() {
+    //     HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", null, true);
+    //     String res = testGet.connect();
+    //     assertFalse("Bad request!", res.contains("400 Bad Request"));
+    // }
 }
