@@ -45,7 +45,7 @@ public class Httpc {
     protected String action;
     protected String target;
 
-    public Httpc(final String[] args) throws ParseException {
+    public Httpc(final String[] args) throws Exception {
         this.args = args;
         parse();
     }

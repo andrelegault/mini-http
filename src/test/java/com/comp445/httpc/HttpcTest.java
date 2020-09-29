@@ -3,7 +3,7 @@ package com.comp445.httpc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.Exception;
 import org.junit.jupiter.api.Test;
 
 public class HttpcTest {
@@ -15,7 +15,7 @@ public class HttpcTest {
             test = new Httpc(args);
             assertEquals(test.action, "get");
             assertEquals("http://httpbin.org/get?course=networking&assignment=1", test.target);
-        } catch (ParseException e) {
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -29,7 +29,7 @@ public class HttpcTest {
             test = new Httpc(args);
             assertEquals("get", test.action);
             assertEquals(true, test.verbose);
-        } catch (ParseException e) {
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -45,7 +45,7 @@ public class HttpcTest {
             assertEquals(true, test.verbose);
             assertEquals(1, test.headers.size());
             assertEquals("val", test.headers.get("key"));
-        } catch (ParseException e) {
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -63,7 +63,7 @@ public class HttpcTest {
             assertEquals(2, test.headers.size());
             assertEquals("val", test.headers.get("key"));
             assertEquals("anotherVal", test.headers.get("anotherKey"));
-        } catch (ParseException e) {
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -79,7 +79,7 @@ public class HttpcTest {
             assertEquals("post", test.action);
             assertEquals(true, test.verbose);
             assertEquals("anotherVal", test.data);
-        } catch (ParseException e) {
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
