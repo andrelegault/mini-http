@@ -134,6 +134,7 @@ public class Httpc {
         if (isRequest(this.action)) {
             try {
                 prepareCommonOptions();
+                setTarget();
                 if (action.equalsIgnoreCase("get")) {
                     cmdLine = parser.parse(options, args);
                     collectVerbose();
@@ -167,11 +168,5 @@ public class Httpc {
         } else if (this.action.equalsIgnoreCase("post")) {
             this.req = new HttpcPost(this.target, this.headers, this.data, this.verbose);
         }
-    }
-
-    public static void main(final String[] args) {
-        final String[] args2 = { "get", "-v", "http://httpbin.org/get?course=networking&assignment=1" };
-        final Httpc test = new Httpc(args2);
-        test.req.connect();
     }
 }
