@@ -76,7 +76,7 @@ public class HttpcTest {
         Httpc test;
         try {
             test = new Httpc(args);
-            assertEquals("get", test.action);
+            assertEquals("post", test.action);
             assertEquals(true, test.verbose);
             assertEquals("anotherVal", test.data);
         } catch (ParseException e) {
