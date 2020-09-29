@@ -116,20 +116,16 @@ public class Httpc {
     private void parse() throws ParseException {
         final int argLen = args.length;
         if (argLen == 0) {
-            System.out.println(usageGeneral);
-            System.exit(1);
+            System.err.println(usageGeneral);
         }
         this.action = args[0];
         if (this.action.equalsIgnoreCase("help")) {
             if (args[1].equalsIgnoreCase("get")) {
-                System.out.println(usageGet);
-                System.exit(1);
+                System.err.println(usageGet);
             } else if (args[1].equalsIgnoreCase("post")) {
-                System.out.println(usagePost);
-                System.exit(1);
+                System.err.println(usagePost);
             } else {
-                System.out.println(usageGeneral);
-                System.exit(1);
+                System.err.println(usageGeneral);
             }
         }
 
@@ -148,12 +144,10 @@ public class Httpc {
                     collectHeaders();
                     collectData();
                 } else {
-                    System.out.println(usagePost);
-                    System.exit(1);
+                    System.err.println(usagePost);
                 }
             } else {
-                System.out.println(usageGeneral);
-                System.exit(1);
+                System.err.println(usageGeneral);
             }
         }
     }
