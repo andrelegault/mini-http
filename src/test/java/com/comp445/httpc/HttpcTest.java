@@ -78,7 +78,6 @@ public class HttpcTest {
             test = new Httpc(args);
             assertEquals("post", test.action);
             assertEquals(true, test.verbose);
-            assertEquals("anotherVal", test.data);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
