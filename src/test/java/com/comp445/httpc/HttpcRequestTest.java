@@ -1,8 +1,5 @@
 package com.comp445.httpc;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,7 +36,7 @@ public class HttpcRequestTest {
     public void testHttpcRequestGet() {
         final HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", null, verbose);
         final String res = testGet.connect();
-        assert(res.contains("200 OK"));
+        assert (res.contains("200 OK"));
     }
 
     @Test
@@ -47,7 +44,7 @@ public class HttpcRequestTest {
         final HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", emptyHeaders,
                 verbose);
         final String res = testGet.connect();
-        assert(res.contains("200 OK"));
+        assert (res.contains("200 OK"));
     }
 
     @Test
@@ -55,7 +52,7 @@ public class HttpcRequestTest {
         final HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", validHeaders,
                 verbose);
         final String res = testGet.connect();
-        assert(res.contains("200 OK"));
+        assert (res.contains("200 OK"));
     }
 
     @Test
@@ -63,7 +60,7 @@ public class HttpcRequestTest {
         final HttpcPost testPost = new HttpcPost("http://httpbin.org/get?course=networking&assignment=1", null, null,
                 verbose);
         final String res = testPost.connect();
-        assert(res.contains("200 OK"));
+        assert (res.contains("200 OK"));
     }
 
     @Test
@@ -71,6 +68,6 @@ public class HttpcRequestTest {
         final HttpcPost testPost = new HttpcPost("http://httpbin.org/get?course=networking&assignment=1", null,
                 invalidDataFilename, verbose);
         final String res = testPost.connect();
-        assert(res.contains("200 OK"));
+        assert (res.contains("200 OK"));
     }
 }
