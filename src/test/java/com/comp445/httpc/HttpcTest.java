@@ -15,7 +15,6 @@ public class HttpcTest {
             assertEquals(test.action, "get");
             assertEquals("http://httpbin.org/get?course=networking&assignment=1", test.target);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -29,7 +28,6 @@ public class HttpcTest {
             assertEquals("get", test.action);
             assertEquals(true, test.verbose);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -45,7 +43,6 @@ public class HttpcTest {
             assertEquals(1, test.headers.size());
             assertEquals("val", test.headers.get("key"));
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -63,7 +60,6 @@ public class HttpcTest {
             assertEquals("val", test.headers.get("key"));
             assertEquals("anotherVal", test.headers.get("anotherKey"));
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -78,7 +74,6 @@ public class HttpcTest {
             assertEquals("post", test.action);
             assertEquals(true, test.verbose);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -99,7 +94,6 @@ public class HttpcTest {
             test = new Httpc(args);
             assertEquals("1234test\n", test.data);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -113,7 +107,6 @@ public class HttpcTest {
             test = new Httpc(args);
             assertEquals("'{ \"Assignment\": 1'", test.data);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
