@@ -16,14 +16,14 @@ public abstract class HttpcRequest {
      * 
      * Methods implemented follow https://tools.ietf.org/html/rfc7230#section-3.2
      */
-    protected Host host;
-    protected Map<String, String> headers;
-    protected Socket socket;
-    protected BufferedReader in;
     protected PrintWriter out;
-    protected boolean verbose;
-    protected final int HTTP_PORT = 80;
+    private Host host;
+    private Map<String, String> headers;
+    private Socket socket;
+    private BufferedReader in;
+    private boolean verbose;
 
+    private final int HTTP_PORT = 80;
     protected HttpcRequest(final String hostString, final Map<String, String> headers, final boolean verbose) {
         this.host = new Host(hostString);
         this.headers = headers;
