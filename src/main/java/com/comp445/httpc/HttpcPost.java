@@ -22,6 +22,7 @@ public class HttpcPost extends HttpcRequest {
     protected void setDataHeaders() {
         out.printf("Content-Length: %d\r%n", getContentLength());
         out.printf("Content-Type: text/plain\r%n", getContentLength());
+        out.printf("Accept-Encoding: gzip, deflate, br\r%n");
         out.printf("\r%n");
         if (data != null) {
             out.printf("%s\r%n", data);
