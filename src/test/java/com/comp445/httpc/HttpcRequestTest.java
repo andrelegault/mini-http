@@ -1,5 +1,8 @@
 package com.comp445.httpc;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,9 +18,7 @@ public class HttpcRequestTest {
     final Map<String, String> validHeaders = new HashMap<String, String>();
     final Map<String, String> emptyHeaders = new HashMap<String, String>();
 
-    final String validDataFilename = "test.txt";
-    final String invalidDataFilename = "idontexist.txt";
-    final String emptyDataFilename = "";
+    String dataFromFile;
 
     final String validDataString = "{ 'Assignment': 1, 'Thing': 2, 'OtherThing': 'Something' }";
     final String invalidDataString = "thing";
@@ -25,6 +26,11 @@ public class HttpcRequestTest {
 
     @BeforeAll
     public void testBeforeAll() {
+        try {
+            dataFromFile = Files.readString(Path.of("test.txt"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         invalidHeaders.put("key1", "");
         invalidHeaders.put("", "");
         invalidHeaders.put("", "val3");
@@ -57,17 +63,18 @@ public class HttpcRequestTest {
 
     @Test
     public void testPost() {
-        final HttpcPost testPost = new HttpcPost("http://httpbin.org/get?course=networking&assignment=1", null, null,
+        final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, null,
                 verbose);
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcPostInvalidData() {
-        final HttpcPost testPost = new HttpcPost("http://httpbin.org/get?course=networking&assignment=1", null,
-                invalidDataFilename, verbose);
+    public void testPostWithData() {
+        final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, dataFromFile,
+                verbose);
         final String res = testPost.connect();
+        System.out.println(res);
         assert (res.contains("200 OK"));
     }
 }
