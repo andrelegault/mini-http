@@ -88,10 +88,14 @@ public abstract class HttpcRequest {
         out.printf("Connection: Close\r%n");
         out.printf("DNT: 1\r%n");
         if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                out.printf("%s: %s\r%n", entry.getKey(), entry.getValue());
+            for (final Map.Entry<String, String> entry : headers.entrySet()) {
+                out.printf("%s: %s\r%n", capitalize(entry.getKey()), entry.getValue());
             }
         }
+    }
+
+    private String capitalize(final String word) {
+        return word == null || word.length() == 0 ? word : word.substring(0, 1).toUpperCase() + word.substring(1);
     }
 
 }
