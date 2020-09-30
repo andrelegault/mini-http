@@ -74,7 +74,6 @@ public class HttpcRequestTest {
         final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, dataFromFile,
                 verbose);
         final String res = testPost.connect();
-        System.out.println(res);
         assert (res.contains("200 OK"));
     }
 }

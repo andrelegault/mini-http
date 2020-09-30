@@ -20,12 +20,11 @@ public class HttpcPost extends HttpcRequest {
     }
 
     protected void setDataHeaders() {
-        out.printf("Content-Length: %d\r%n", getContentLength());
-        out.printf("Content-Type: text/plain\r%n", getContentLength());
-        out.printf("Accept-Encoding: gzip, deflate, br\r%n");
-        out.printf("\r%n");
+        outFmt.format("Content-Length: %d\r%n", getContentLength());
+        outFmt.format("Content-Type: text/plain\r%n", getContentLength());
+        outFmt.format("\r%n");
         if (data != null) {
-            out.printf("%s\r%n", data);
+            outFmt.format("%s\r%n", data);
         }
     }
 

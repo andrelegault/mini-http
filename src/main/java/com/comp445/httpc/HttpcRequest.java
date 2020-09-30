@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Formatter;
 import java.util.Map;
 
 public abstract class HttpcRequest {
@@ -24,6 +25,9 @@ public abstract class HttpcRequest {
     private boolean verbose;
 
     private final int HTTP_PORT = 80;
+    private final StringBuilder verboseContainer = new StringBuilder();
+    protected final Formatter outFmt = new Formatter(verboseContainer);
+
     protected HttpcRequest(final String hostString, final Map<String, String> headers, final boolean verbose) {
         this.host = new Host(hostString);
         this.headers = headers;
@@ -42,14 +46,18 @@ public abstract class HttpcRequest {
 
             setRequestHeaders();
             setDataHeaders();
-            out.printf("\r%n");
+            outFmt.format("\r%n");
 
-            final String data = readData();
+            final String sent = verboseContainer.toString();
+            out.println(sent);
+
+            final String received = readData();
             if (verbose) {
-                System.out.println(data);
+                System.out.println(sent);
+                System.out.println(received);
             }
             close();
-            return data;
+            return received;
         } catch (final MalformedURLException e) {
             e.printStackTrace();
         } catch (final UnknownHostException e) {
@@ -82,14 +90,15 @@ public abstract class HttpcRequest {
     }
 
     private void setRequestHeaders() {
-        out.printf("%s %s%s  HTTP/1.1\r%n", getMethod(), host.url.getPath(), getQueryOrEmptyString());
-        out.printf("Host: " + host.url.getHost() + "\r%n");
-        out.printf("Upgrade-Insecure-Requests: 1\r%n");
-        out.printf("Connection: Close\r%n");
-        out.printf("DNT: 1\r%n");
+        outFmt.format("%s %s%s HTTP/1.1\r%n", getMethod(), host.url.getPath(), getQueryOrEmptyString());
+        outFmt.format("Host: " + host.url.getHost() + "\r%n");
+        outFmt.format("Upgrade-Insecure-Requests: 1\r%n");
+        outFmt.format("Connection: Close\r%n");
+        outFmt.format("Accept-Encoding: gzip, deflate, br\r%n");
+        outFmt.format("DNT: 1\r%n");
         if (headers != null) {
             for (final Map.Entry<String, String> entry : headers.entrySet()) {
-                out.printf("%s: %s\r%n", capitalize(entry.getKey()), entry.getValue());
+                outFmt.format("%s: %s\r%n", capitalize(entry.getKey()), entry.getValue());
             }
         }
     }
