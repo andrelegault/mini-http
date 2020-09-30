@@ -65,6 +65,28 @@ public class HttpcTest {
     }
 
     @Test
+    public void testHttpcGetWithDataString() {
+        final String[] args = { "get", "-v", "-d", "'{ \"Assignment\": 1'",
+                "http://httpbin.org/get?course=networking&assignment=1" };
+        try {
+            assertThrows(Exception.class, () -> new Httpc(args));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testHttpcGetWithDataFilename() {
+        final String[] args = { "get", "-v", "-f", "test.txt",
+                "http://httpbin.org/get?course=networking&assignment=1" };
+        try {
+            assertThrows(Exception.class, () -> new Httpc(args));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
     public void testHttpcPostWithData() {
         final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1'",
                 "http://httpbin.org/get?course=networking&assignment=1" };
