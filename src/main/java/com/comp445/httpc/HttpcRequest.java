@@ -60,7 +60,7 @@ public abstract class HttpcRequest {
         return "An error occurred!";
     }
 
-    protected String readData() throws IOException {
+    private String readData() throws IOException {
         int character;
         final StringBuilder container = new StringBuilder();
 
@@ -76,20 +76,20 @@ public abstract class HttpcRequest {
         socket.close();
     }
 
-    protected String getQueryOrEmptyString() {
+    private String getQueryOrEmptyString() {
         final String query = host.url.getQuery();
         return (query != null && !query.equals("") && !query.equals("/")) ? "?" + host.url.getQuery() : "";
     }
 
-    protected void setRequestHeaders() {
+    private void setRequestHeaders() {
         out.printf("%s %s%s  HTTP/1.1\r%n", getMethod(), host.url.getPath(), getQueryOrEmptyString());
         out.printf("Host: " + host.url.getHost() + "\r%n");
         out.printf("Upgrade-Insecure-Requests: 1\r%n");
         out.printf("Connection: Close\r%n");
         out.printf("DNT: 1\r%n");
-        if (headers != null && !headers.isEmpty()) {
+        if (headers != null) {
             for (Map.Entry<String, String> entry : headers.entrySet()) {
-                out.printf("%s: %s", entry.getKey(), entry.getValue());
+                out.printf("%s: %s\r%n", entry.getKey(), entry.getValue());
             }
         }
     }
