@@ -71,7 +71,8 @@ public class HttpcRequestTest {
 
     @Test
     public void testPostWithData() {
-        final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, dataFromFile, verbose, "outputFile.txt");
+        final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, dataFromFile, verbose,
+                "outputFile.txt");
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
     }
