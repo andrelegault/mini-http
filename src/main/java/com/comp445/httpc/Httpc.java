@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
@@ -39,8 +41,12 @@ public class Httpc {
             .concat("   post    executes a HTTP POST request and prints the response.\n")
             .concat("   help    prints this screen.\n\n")
             .concat("Use \"httpc help [command]\" for more information about a command.");
+
+    private HelpFormatter formatter = new HelpFormatter();
+
     // All valid actions
     final Set<String> validActions = Set.of("post", "get");
+    final Set<String> validCommands = Set.of("post", "get", "help");
 
     // Object that parses arguments provided through the CLI
     private final CommandLineParser parser = new DefaultParser();
@@ -78,9 +84,18 @@ public class Httpc {
      * @param args Arguments provided through CLI.
      * @throws Exception
      */
-    public Httpc(final String[] args) throws Exception {
+    public Httpc(final String[] args) {
         this.args = args;
-        parse();
+        try {
+            parse();
+        } catch (Exception e) {
+            if (this.action == null || this.action.equalsIgnoreCase("help")) {
+                System.err.println(usageGeneral);
+            } else {
+                formatter.printHelp("httpc " + this.action, options);
+            }
+            // e.printStackTrace();
+        }
     }
 
     /**
@@ -90,37 +105,51 @@ public class Httpc {
      * @return boolean Whether the check is a request.
      */
     private boolean isRequest(final String check) {
-        if (check != null && !check.isEmpty() && (validActions.contains(check))) {
-            return true;
+        if (check != null && !check.isEmpty()) {
+            for (String validAction : validActions) {
+                if (validAction.equalsIgnoreCase(check.toLowerCase())) {
+                    return true;
+                }
+            }
+            return false;
         } else {
             return false;
         }
     }
 
+    /**
+     * Adds the options necessary for the post, and help commands.
+     */
+    private void prepareCommonOptions() {
+        final Option optVerbose = Option.builder("v").required(false).hasArg(false)
+                .desc("Prints the detail of the response such as protocol, status, and headers.").build();
+        final Option optHeaders = Option.builder("h").required(false).hasArgs().valueSeparator(':')
+                .desc("Associates headers to HTTP Request with the format 'key:value'.").build();
+        options.addOption(optVerbose);
+        options.addOption(optHeaders);
+    }
+
+    private void prepareGetOptions() {
+        prepareCommonOptions();
+    }
+
+    /**
+     * Adds the options necessary for the post command.
+     */
     private void preparePostOptions() {
-        final Option optDataString = Option.builder("d").required(false).hasArg(true).desc("JSON string request body")
-                .build();
-        final Option optDataFile = Option.builder("f").required(false).hasArg(true).desc("File request body").build();
+        prepareCommonOptions();
+        final Option optDataString = Option.builder("d").required(false).hasArg(true)
+                .desc("Associates an inline data to the body HTTP POST request.").build();
+        final Option optDataFile = Option.builder("f").required(false).hasArg(true)
+                .desc("Associates the content of a file to the body HTTP POST request.").build();
         options.addOption(optDataString);
         options.addOption(optDataFile);
     }
 
     /**
-     * Sets the verbose and headers options.
-     */
-    private void prepareCommonOptions() {
-        final Option optVerbose = Option.builder("v").required(false).hasArg(false).desc("Makes the program verbose")
-                .build();
-        final Option optHeaders = Option.builder("h").required(false).hasArg(true).hasArgs().valueSeparator(':')
-                .desc("Headers").build();
-        options.addOption(optVerbose);
-        options.addOption(optHeaders);
-    }
-
-    /**
      * Sets the `headers` variable.
      */
-    private void collectHeaders() {
+    private void setHeaders() {
         final Properties properties = cmdLine.getOptionProperties("h");
         this.headers = new HashMap<String, String>((Map) properties);
     }
@@ -130,7 +159,7 @@ public class Httpc {
      * 
      * @throws IOException
      */
-    private void collectData() throws IOException {
+    private void setData() throws IOException {
         this.data = cmdLine.hasOption("d") ? cmdLine.getOptionValue("d")
                 : loadFileContents(Path.of(cmdLine.getOptionValue("f")));
     }
@@ -148,15 +177,54 @@ public class Httpc {
     /**
      * Sets the `verbose` variable.
      */
-    private void collectVerbose() {
+    private void setVerbose() {
         this.verbose = cmdLine.hasOption("v");
     }
 
+    private Set<String> getOptionValues() {
+        Set<String> vals = new HashSet<String>();
+        for (Option o : cmdLine.getOptions()) {
+            if (o.getValue() != null) {
+                if (o.getValues().length > 1) {
+                    String val = "";
+                    vals.add(val.toLowerCase());
+                } else {
+                    vals.add(o.getValue());
+                }
+            }
+        }
+        return vals;
+    }
+
     /**
-     * Sets the `target` variable.
+     * Searches for a URL in the list of args (excluding options). Sets the target
+     * if possible, throws otherwise.
+     * 
+     * @throws Exception
      */
-    private void setTarget() {
-        this.target = args[args.length - 1];
+    private void setTarget() throws Exception {
+        String testTarget = args[args.length-1];
+        if (testTarget != null && testTarget.isEmpty() && !testTarget.startsWith("http://")) {
+            throw new Exception("Error providing target");
+        } else {
+            this.target = testTarget;
+        }
+        // String urlArg = "";
+        // int possibleUrlArgs = 0;
+        // final Set<String> vals = getOptionValues();
+        // for (String arg : args) {
+        //     if (!arg.isEmpty() && arg.charAt(0) != '-' && !isRequest(arg) && !arg.equalsIgnoreCase("help")
+        //             && !vals.contains(arg.toLowerCase())) {
+        //         urlArg = arg;
+        //         possibleUrlArgs++;
+        //         System.out.println(urlArg);
+        //     }
+        // }
+        // if (possibleUrlArgs != 1) {
+        //     throw new Exception("Error providing target");
+        // } else {
+        //     this.target = urlArg;
+        // }
     }
 
     /**
@@ -167,40 +235,46 @@ public class Httpc {
      */
     private void parse() throws Exception {
         final int argLen = args.length;
-        if (argLen == 0) {
-            System.err.println(usageGeneral);
+
+        if (argLen < 1) {
+            throw new Exception("Insufficient arguments provided!");
         }
+
         this.action = args[0];
         if (this.action.equalsIgnoreCase("help")) {
             if (args[1].equalsIgnoreCase("get")) {
-                System.err.println(usageGet);
+                prepareGetOptions();
+                this.action = "get";
+                throw new Exception();
             } else if (args[1].equalsIgnoreCase("post")) {
-                System.err.println(usagePost);
+                preparePostOptions();
+                this.action = "post";
+                throw new Exception();
             } else {
-                System.err.println(usageGeneral);
+                throw new Exception();
             }
         }
 
         if (isRequest(this.action)) {
-            prepareCommonOptions();
-            setTarget();
             if (action.equalsIgnoreCase("get")) {
+                prepareGetOptions();
                 cmdLine = parser.parse(options, args);
-                collectVerbose();
-                collectHeaders();
+                setTarget();
+                setVerbose();
+                setHeaders();
             } else if (action.equalsIgnoreCase("post")) {
                 preparePostOptions();
                 this.cmdLine = parser.parse(options, args);
+                setTarget();
                 if (cmdLine.hasOption("d") ^ cmdLine.hasOption("f")) {
-                    collectVerbose();
-                    collectHeaders();
-                    collectData();
+                    setVerbose();
+                    setHeaders();
+                    setData();
                 } else {
-                    System.err.println(usagePost);
-                    throw new Exception("Invalid use of -d or -f!");
+                    throw new Exception("Invalid use of -d or -f");
                 }
             } else {
-                System.err.println(usageGeneral);
+                throw new Exception("Invalid use of -d or -f");
             }
         }
     }
