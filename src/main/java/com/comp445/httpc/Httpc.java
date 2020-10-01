@@ -128,8 +128,8 @@ public class Httpc {
                 .desc("Prints the detail of the response such as protocol, status, and headers.").build();
         final Option optHeaders = Option.builder("h").required(false).hasArgs().valueSeparator(':')
                 .desc("Associates headers to HTTP Request with the format 'key:value'.").build();
-        final Option optOutputFilename = Option.builder("o").required(false).hasArg().desc("Writes to the specified file")
-                .build();
+        final Option optOutputFilename = Option.builder("o").required(false).hasArg()
+                .desc("Writes to the specified file").build();
         options.addOption(optVerbose);
         options.addOption(optHeaders);
         options.addOption(optOutputFilename);
