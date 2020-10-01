@@ -78,6 +78,9 @@ public class Httpc {
     // Request target
     protected String target;
 
+    // Filename to output to
+    protected String outputFilename;
+
     /**
      * Constructor.
      * 
@@ -125,8 +128,11 @@ public class Httpc {
                 .desc("Prints the detail of the response such as protocol, status, and headers.").build();
         final Option optHeaders = Option.builder("h").required(false).hasArgs().valueSeparator(':')
                 .desc("Associates headers to HTTP Request with the format 'key:value'.").build();
+        final Option optOutputFilename = Option.builder("o").required(false).hasArg().desc("Writes to standard output")
+                .build();
         options.addOption(optVerbose);
         options.addOption(optHeaders);
+        options.addOption(optOutputFilename);
     }
 
     private void prepareGetOptions() {
@@ -203,7 +209,7 @@ public class Httpc {
      * @throws Exception
      */
     private void setTarget() throws Exception {
-        String testTarget = args[args.length-1];
+        String testTarget = args[args.length - 1];
         if (testTarget != null && testTarget.isEmpty() && !testTarget.startsWith("http://")) {
             throw new Exception("Error providing target");
         } else {
@@ -213,18 +219,26 @@ public class Httpc {
         // int possibleUrlArgs = 0;
         // final Set<String> vals = getOptionValues();
         // for (String arg : args) {
-        //     if (!arg.isEmpty() && arg.charAt(0) != '-' && !isRequest(arg) && !arg.equalsIgnoreCase("help")
-        //             && !vals.contains(arg.toLowerCase())) {
-        //         urlArg = arg;
-        //         possibleUrlArgs++;
-        //         System.out.println(urlArg);
-        //     }
+        // if (!arg.isEmpty() && arg.charAt(0) != '-' && !isRequest(arg) &&
+        // !arg.equalsIgnoreCase("help")
+        // && !vals.contains(arg.toLowerCase())) {
+        // urlArg = arg;
+        // possibleUrlArgs++;
+        // System.out.println(urlArg);
+        // }
         // }
         // if (possibleUrlArgs != 1) {
-        //     throw new Exception("Error providing target");
+        // throw new Exception("Error providing target");
         // } else {
-        //     this.target = urlArg;
+        // this.target = urlArg;
         // }
+    }
+
+    /**
+     * Sets the outputFilename.
+     */
+    private void setOutputFilename() {
+        this.outputFilename = cmdLine.getOptionValue("o");
     }
 
     /**
@@ -262,6 +276,7 @@ public class Httpc {
                 setTarget();
                 setVerbose();
                 setHeaders();
+                setOutputFilename();
             } else if (action.equalsIgnoreCase("post")) {
                 preparePostOptions();
                 this.cmdLine = parser.parse(options, args);
@@ -270,6 +285,7 @@ public class Httpc {
                     setVerbose();
                     setHeaders();
                     setData();
+                    setOutputFilename();
                 } else {
                     throw new Exception("Invalid use of -d or -f");
                 }
@@ -281,9 +297,9 @@ public class Httpc {
 
     private void run() {
         if (this.action.equalsIgnoreCase("get")) {
-            this.req = new HttpcGet(this.target, headers, verbose);
+            this.req = new HttpcGet(this.target, this.headers, this.verbose, this.outputFilename);
         } else if (this.action.equalsIgnoreCase("post")) {
-            this.req = new HttpcPost(this.target, this.headers, this.data, this.verbose);
+            this.req = new HttpcPost(this.target, this.headers, this.data, this.verbose, this.outputFilename);
         }
     }
 }

@@ -40,7 +40,8 @@ public class HttpcRequestTest {
 
     @Test
     public void testHttpcRequestGet() {
-        final HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", null, verbose);
+        final HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", null, verbose,
+                null);
         final String res = testGet.connect();
         assert (res.contains("200 OK"));
     }
@@ -48,7 +49,7 @@ public class HttpcRequestTest {
     @Test
     public void testHttpcGetEmptyHeaders() {
         final HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", emptyHeaders,
-                verbose);
+                verbose, null);
         final String res = testGet.connect();
         assert (res.contains("200 OK"));
     }
@@ -56,23 +57,21 @@ public class HttpcRequestTest {
     @Test
     public void testHttpcGetValidHeaders() {
         final HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", validHeaders,
-                verbose);
+                verbose, null);
         final String res = testGet.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
     public void testPost() {
-        final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, null,
-                verbose);
+        final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, null, verbose, null);
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
     public void testPostWithData() {
-        final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, dataFromFile,
-                verbose);
+        final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, dataFromFile, verbose, "outputFile.txt");
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
     }

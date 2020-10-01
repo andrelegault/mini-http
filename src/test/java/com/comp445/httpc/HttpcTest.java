@@ -15,9 +15,11 @@ public class HttpcTest {
 
     @Test
     public void testHttpcGet() {
-        final String[] args = { "get", "http://httpbin.org/get?course=networking&assignment=1" };
+        final String[] args = { "get", "-o", "outputFilename.txt",
+                "http://httpbin.org/get?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertEquals(test.action, "get");
+        assertEquals("outputFilename.txt", test.outputFilename);
         assertEquals("http://httpbin.org/get?course=networking&assignment=1", test.target);
     }
 
@@ -61,7 +63,7 @@ public class HttpcTest {
 
     @Test
     public void testHttpcGetWithDataString() {
-        final String[] args = { "get", "-v", "-d", "'{ \"Assignment\": 1'",
+        final String[] args = { "get", "-v", "-d", "'{ \"Assignment\": 1 }'",
                 "http://httpbin.org/get?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertNull(test.req);
@@ -85,8 +87,8 @@ public class HttpcTest {
 
     @Test
     public void testHttpcPostWithData() {
-        final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1'",
-                "http://httpbin.org/get?course=networking&assignment=1" };
+        final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'",
+                "http://httpbin.org/post?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertEquals("post", test.action);
         assertEquals(true, test.verbose);
@@ -94,8 +96,8 @@ public class HttpcTest {
 
     @Test
     public void testHttpcPostWithInvalidData() {
-        final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1'", "-f", "test.txt",
-                "http://httpbin.org/get?course=networking&assignment=1" };
+        final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'", "-f", "test.txt",
+                "http://httpbin.org/post?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertNull(test.req);
     }
@@ -103,16 +105,33 @@ public class HttpcTest {
     @Test
     public void testHttpcPostWithValidFileData() {
         final String[] args = { "post", "-v", "-f", "test.txt",
-                "http://httpbin.org/get?course=networking&assignment=1" };
+                "http://httpbin.org/post?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertEquals("1234test\n", test.data);
     }
 
     @Test
     public void testHttpcPostWithValidStringData() {
-        final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1'",
+        final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'",
+                "http://httpbin.org/post?course=networking&assignment=1" };
+        Httpc test = new Httpc(args);
+        assertEquals("'{ \"Assignment\": 1 }'", test.data);
+    }
+
+    @Test
+    public void testHttpcGetOutputToFile() {
+        final String[] args = { "get", "-v", "-o", "outputFile.txt",
                 "http://httpbin.org/get?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
-        assertEquals("'{ \"Assignment\": 1'", test.data);
+        assertEquals("outputFile.txt", test.outputFilename);
+    }
+
+    @Test
+    public void testHttpcPostOutputToFile() {
+        final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'", "-o", "outputFile.txt",
+                "http://httpbin.org/post?course=networking&assignment=1" };
+        Httpc test = new Httpc(args);
+        assertEquals("'{ \"Assignment\": 1 }'", test.data);
+        assertEquals("outputFile.txt", test.outputFilename);
     }
 }

@@ -1,6 +1,8 @@
 package com.comp445.httpc;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -23,20 +25,33 @@ public abstract class HttpcRequest {
     private Socket socket;
     private BufferedReader in;
     private boolean verbose;
+    private String outputFilename;
 
     private final int HTTP_PORT = 80;
     private final StringBuilder verboseContainer = new StringBuilder();
     protected final Formatter outFmt = new Formatter(verboseContainer);
 
-    protected HttpcRequest(final String hostString, final Map<String, String> headers, final boolean verbose) {
+    protected HttpcRequest(final String hostString, final Map<String, String> headers, final boolean verbose,
+            final String outputFilename) {
         this.host = new Host(hostString);
         this.headers = headers;
         this.verbose = verbose;
+        this.outputFilename = outputFilename;
     }
 
     protected abstract void setDataHeaders();
 
     protected abstract String getMethod();
+
+    private void writeToFile(String sent, String received) throws IOException {
+        final File output = new File(this.outputFilename);
+        if (output.createNewFile()) {
+            final FileWriter fileWriter = new FileWriter(output);
+            fileWriter.write(sent);
+            fileWriter.write(received);
+            fileWriter.close();
+        }
+    }
 
     protected String connect() {
         try {
@@ -55,6 +70,9 @@ public abstract class HttpcRequest {
             if (verbose) {
                 System.out.println(sent);
                 System.out.println(received);
+            }
+            if (outputFilename != null) {
+                writeToFile(sent, received);
             }
             close();
             return received;
