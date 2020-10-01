@@ -90,7 +90,7 @@ public abstract class HttpcRequest {
     }
 
     private void setRequestHeaders() {
-        outFmt.format("%s %s%s HTTP/1.1\r%n", getMethod(), host.url.getPath(), getQueryOrEmptyString());
+        outFmt.format("%s %s%s HTTP/1.0\r%n", getMethod(), host.url.getPath(), getQueryOrEmptyString());
         outFmt.format("Host: " + host.url.getHost() + "\r%n");
         outFmt.format("Upgrade-Insecure-Requests: 1\r%n");
         outFmt.format("Connection: Close\r%n");
