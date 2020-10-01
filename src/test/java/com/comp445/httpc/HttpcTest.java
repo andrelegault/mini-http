@@ -68,6 +68,14 @@ public class HttpcTest {
     }
 
     @Test
+    public void testHttpcPostWithInvalidDataFilename() {
+        final String[] args = { "post", "-v", "-f", "idontexist.txt",
+                "http://httpbin.org/get?course=networking&assignment=1" };
+        Httpc test = new Httpc(args);
+        assertNull(test.req);
+    }
+
+    @Test
     public void testHttpcGetWithDataFilename() {
         final String[] args = { "get", "-v", "-f", "test.txt",
                 "http://httpbin.org/get?course=networking&assignment=1" };
