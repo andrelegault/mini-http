@@ -2,6 +2,7 @@ package com.comp445.httpc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +29,7 @@ public class HttpcTest {
         final String[] args = { "get", "-v", "http://httpbin.org/get?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertEquals("get", test.action);
-        assertEquals(true, test.verbose);
+        assertTrue(test.verbose);
     }
 
     @Test
@@ -36,7 +37,7 @@ public class HttpcTest {
         final String[] args = { "get", "-v", "-h", "key:val", "http://httpbin.org/get?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertEquals("get", test.action);
-        assertEquals(true, test.verbose);
+        assertTrue(test.verbose);
         assertEquals(1, test.headers.size());
         assertEquals("val", test.headers.get("key"));
     }
@@ -47,7 +48,7 @@ public class HttpcTest {
                 "http://httpbin.org/get?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertEquals("get", test.action);
-        assertEquals(true, test.verbose);
+        assertTrue(test.verbose);
         assertEquals(2, test.headers.size());
         assertEquals("val", test.headers.get("key"));
         assertEquals("anotherVal", test.headers.get("anotherKey"));
@@ -91,7 +92,7 @@ public class HttpcTest {
                 "http://httpbin.org/post?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertEquals("post", test.action);
-        assertEquals(true, test.verbose);
+        assertTrue(test.verbose);
     }
 
     @Test

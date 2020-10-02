@@ -21,8 +21,6 @@ public class HttpcRequestTest {
     String dataFromFile;
 
     final String validDataString = "{ 'Assignment': 1, 'Thing': 2, 'OtherThing': 'Something' }";
-    final String invalidDataString = "thing";
-    final String emptyDataString = "";
 
     @BeforeAll
     public void testBeforeAll() {
@@ -32,7 +30,6 @@ public class HttpcRequestTest {
             e.printStackTrace();
         }
         invalidHeaders.put("key1", "");
-        invalidHeaders.put("", "");
         invalidHeaders.put("", "val3");
         validHeaders.put("key1", "val1");
         validHeaders.put("key2", "val2");
@@ -72,6 +69,14 @@ public class HttpcRequestTest {
     @Test
     public void testPostWithData() {
         final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, dataFromFile, verbose,
+                "outputFile.txt");
+        final String res = testPost.connect();
+        assert (res.contains("200 OK"));
+    }
+
+    @Test
+    public void testPostWithDataString() {
+        final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, validDataString, verbose,
                 "outputFile.txt");
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
