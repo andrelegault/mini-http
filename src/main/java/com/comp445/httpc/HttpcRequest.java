@@ -6,9 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.MalformedURLException;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Formatter;
 import java.util.Map;
 
@@ -20,12 +18,12 @@ public abstract class HttpcRequest {
      * Methods implemented follow https://tools.ietf.org/html/rfc7230#section-3.2
      */
     protected PrintWriter out;
-    private Host host;
-    private Map<String, String> headers;
+    private final Host host;
+    private final Map<String, String> headers;
     private Socket socket;
     private BufferedReader in;
-    private boolean verbose;
-    private String outputFilename;
+    private final boolean verbose;
+    private final String outputFilename;
 
     private final int HTTP_PORT = 80;
     private final StringBuilder verboseContainer = new StringBuilder();

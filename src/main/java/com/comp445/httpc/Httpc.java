@@ -21,20 +21,20 @@ import org.apache.commons.cli.ParseException;
 
 public class Httpc {
     // General usage instructions
-    private String usageGeneral = "Usage:\n".concat("   httpc command [arguments]\n").concat("The commands are:\n")
-            .concat("   get     executes a HTTP GET request and prints the response.\n")
+    private final String usageGeneral = "Usage:\n".concat("   httpc command [arguments]\n")
+            .concat("The commands are:\n").concat("   get     executes a HTTP GET request and prints the response.\n")
             .concat("   post    executes a HTTP POST request and prints the response.\n")
             .concat("   help    prints this screen.\n\n")
             .concat("Use \"httpc help [command]\" for more information about a command.");
 
     // Usage of the get command
-    private String usageGet = "httpc help get\n".concat("   usage: httpc get [-v] [-h key:value]* URL\n")
+    private final String usageGet = "httpc help get\n".concat("   usage: httpc get [-v] [-h key:value]* URL\n")
             .concat("Get executes a HTTP GET request for a given URL.\n")
             .concat("   -v      Prints the detail of the response such as protocol, status, and headers.\n")
             .concat("   -h key:value    Associates headers to HTTP Request with the format 'key:value'.");
 
     // Usage of the post command
-    private String usagePost = "httpc help post\n"
+    private final String usagePost = "httpc help post\n"
             .concat("    usage: httpc post [-v] [-h key:value]* [-d inline-data] [-f file] URL\n")
             .concat("Post executes a HTTP POST request for a given URL with inline data or from file.\n")
             .concat("   get     executes a HTTP GET request and prints the response.\n")
@@ -42,11 +42,11 @@ public class Httpc {
             .concat("   help    prints this screen.\n\n")
             .concat("Use \"httpc help [command]\" for more information about a command.");
 
-    private HelpFormatter formatter = new HelpFormatter();
+    private final HelpFormatter formatter = new HelpFormatter();
 
     // All valid actions
-    final Set<String> validActions = Set.of("post", "get");
-    final Set<String> validCommands = Set.of("post", "get", "help");
+    private final Set<String> validActions = Set.of("post", "get");
+    private final Set<String> validCommands = Set.of("post", "get", "help");
 
     // Object that parses arguments provided through the CLI
     private final CommandLineParser parser = new DefaultParser();
