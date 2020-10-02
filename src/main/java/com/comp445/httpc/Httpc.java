@@ -210,7 +210,7 @@ public class Httpc {
      */
     private void setTarget() throws Exception {
         String testTarget = args[args.length - 1];
-        if (testTarget != null && testTarget.isEmpty() && !testTarget.startsWith("http://")) {
+        if (testTarget != null && (testTarget.isEmpty() || !testTarget.startsWith("http://"))) {
             throw new Exception("Error providing target");
         } else {
             this.target = testTarget;
@@ -301,5 +301,13 @@ public class Httpc {
         } else if (this.action.equalsIgnoreCase("post")) {
             this.req = new HttpcPost(this.target, this.headers, this.data, this.verbose, this.outputFilename);
         }
+        if (this.req != null) {
+            this.req.connect();
+        }
+    }
+
+    public static void main(final String[] args) {
+        final Httpc httpc = new Httpc(args);
+        httpc.run();
     }
 }
