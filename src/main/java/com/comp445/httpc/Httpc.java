@@ -308,6 +308,8 @@ public class Httpc {
 
     public static void main(final String[] args) {
         final Httpc httpc = new Httpc(args);
-        httpc.run();
+        if (httpc.req != null) {
+            httpc.run();
+        }
     }
 }
