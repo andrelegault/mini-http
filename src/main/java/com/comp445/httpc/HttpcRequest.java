@@ -76,10 +76,6 @@ public abstract class HttpcRequest {
             }
             close();
             return received;
-        } catch (final MalformedURLException e) {
-            e.printStackTrace();
-        } catch (final UnknownHostException e) {
-            e.printStackTrace();
         } catch (final IOException e) {
             e.printStackTrace();
         }
