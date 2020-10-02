@@ -3,7 +3,7 @@ package com.comp445.httpc;
 import java.util.Map;
 
 public class HttpcPost extends HttpcRequest {
-    private String data;
+    private final String data;
 
     public HttpcPost(final String host, Map<String, String> headers, final String data, final boolean verbose, final String outputFilename) {
         super(host, headers, verbose, outputFilename);
@@ -21,7 +21,7 @@ public class HttpcPost extends HttpcRequest {
 
     protected void setDataHeaders() {
         outFmt.format("Content-Length: %d\r%n", getContentLength());
-        outFmt.format("Content-Type: text/plain\r%n", getContentLength());
+        outFmt.format("Content-Type: text/plain\r%n");
         outFmt.format("\r%n");
         if (data != null) {
             outFmt.format("%s\r%n", data);

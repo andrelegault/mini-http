@@ -58,7 +58,7 @@ public class Httpc {
     private CommandLine cmdLine;
 
     // Contains the raw arguments provided
-    private String[] args;
+    private final String[] args;
 
     // Request created using provided arguments
     protected HttpcRequest req;
