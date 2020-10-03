@@ -21,7 +21,7 @@ import org.apache.commons.cli.ParseException;
 
 public class Httpc {
     // General usage instructions
-    private final String usageGeneral = "Usage:\n".concat("   httpc command [arguments]\n")
+    private final String usageGeneral = "Usage:\n".concat("   httpc command [arguments] URL\n")
             .concat("The commands are:\n").concat("   get     executes a HTTP GET request and prints the response.\n")
             .concat("   post    executes a HTTP POST request and prints the response.\n")
             .concat("   help    prints this screen.\n\n")
@@ -95,7 +95,7 @@ public class Httpc {
             if (this.action == null || this.action.equalsIgnoreCase("help")) {
                 System.err.println(usageGeneral);
             } else {
-                formatter.printHelp("httpc " + this.action, options);
+                formatter.printHelp("httpc " + this.action + " [arguments] URL", options);
             }
             // e.printStackTrace();
         }
