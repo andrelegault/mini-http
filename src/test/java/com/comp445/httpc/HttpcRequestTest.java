@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeAll;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class HttpcRequestTest {
-    final boolean verbose = true;
+    final boolean verbose = false;
 
     final Map<String, String> invalidHeaders = new HashMap<String, String>();
     final Map<String, String> validHeaders = new HashMap<String, String>();
@@ -47,7 +47,6 @@ public class HttpcRequestTest {
         final HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", null, verbose,
                 null);
         final String res = testGet.connect();
-        System.out.println(res);
         assert (res.contains("200 OK"));
     }
 

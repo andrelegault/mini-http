@@ -57,7 +57,6 @@ public abstract class HttpcRequest {
     protected String connect() {
         try {
             socket = new Socket(host.url.getHost(), HTTP_PORT);
-            System.out.println(socket.toString());
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             verboseContainer = new StringBuilder();
@@ -71,13 +70,7 @@ public abstract class HttpcRequest {
             out.println(sent);
 
             String received = readData();
-            System.out.println(received);
             close();
-
-            if(received.contains("HTTP/1.0 30") || received.contains("HTTP/1.1 30")){
-              host.url = new URL(getURL(received));
-              return connect();
-            }
 
             if (verbose) {
                 System.out.println(sent);
@@ -87,6 +80,12 @@ public abstract class HttpcRequest {
             if (outputFilename != null) {
                 writeToFile(sent, received);
             }
+
+            if(received.contains("HTTP/1.0 30") || received.contains("HTTP/1.1 30")){
+              host.url = new URL(getURL(received));
+              return connect();
+            }
+
             return received;
         } catch (final IOException e) {
             e.printStackTrace();
