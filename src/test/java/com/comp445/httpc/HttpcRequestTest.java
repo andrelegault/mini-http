@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeAll;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class HttpcRequestTest {
-    final boolean verbose = false;
+    final boolean verbose = true;
 
     final Map<String, String> invalidHeaders = new HashMap<String, String>();
     final Map<String, String> validHeaders = new HashMap<String, String>();
@@ -33,6 +33,13 @@ public class HttpcRequestTest {
         invalidHeaders.put("", "val3");
         validHeaders.put("key1", "val1");
         validHeaders.put("key2", "val2");
+    }
+
+    @Test
+    public void testHttpcRequestGetWithNoSlash() {
+        final HttpcGet testGet = new HttpcGet("https://www.google.com", null, verbose, null);
+        final String res = testGet.connect();
+        assert (res.contains("200 OK"));
     }
 
     @Test
