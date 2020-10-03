@@ -117,9 +117,13 @@ public abstract class HttpcRequest {
         return (query != null && !query.equals("") && !query.equals("/")) ? "?" + host.url.getQuery() : "";
     }
 
+    private String sanitizePath(String unsanitizedPath) {
+        return unsanitizedPath.equals("") ? "/" : unsanitizedPath;
+    }
+
     private void setRequestHeaders() {
-        outFmt.format("%s %s%s HTTP/1.0\r%n", getMethod(), host.url.getPath(), getQueryOrEmptyString());
-        outFmt.format("Host: " + host.url.getHost() + "\r%n");
+        outFmt.format("%s %s%s HTTP/1.0\r%n", getMethod(), sanitizePath(host.url.getPath()), getQueryOrEmptyString());
+        outFmt.format("Host: %s\r%n", host.url.getHost());
         outFmt.format("Upgrade-Insecure-Requests: 1\r%n");
         outFmt.format("Connection: Close\r%n");
         outFmt.format("Accept-Encoding: gzip, deflate, br\r%n");
