@@ -40,6 +40,7 @@ public class HttpcRequestTest {
         final HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", null, verbose,
                 null);
         final String res = testGet.connect();
+        System.out.println(res);
         assert (res.contains("200 OK"));
     }
 
@@ -79,6 +80,14 @@ public class HttpcRequestTest {
         final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, validDataString, verbose,
                 "outputFile.txt");
         final String res = testPost.connect();
+        assert (res.contains("200 OK"));
+    }
+
+    @Test
+    public void testHttpcRedirect() {
+        final HttpcGet testRedirect = new HttpcGet("http://google.com/", null, verbose,
+                null);
+        final String res = testRedirect.connect();
         assert (res.contains("200 OK"));
     }
 }

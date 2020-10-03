@@ -7,8 +7,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.URL;
+import java.util.Arrays;
 import java.util.Formatter;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public abstract class HttpcRequest {
     /**
@@ -18,16 +21,16 @@ public abstract class HttpcRequest {
      * Methods implemented follow https://tools.ietf.org/html/rfc7230#section-3.2
      */
     protected PrintWriter out;
-    private final Host host;
-    private final Map<String, String> headers;
+    private Host host;
+    private Map<String, String> headers;
     private Socket socket;
     private BufferedReader in;
     private final boolean verbose;
     private final String outputFilename;
 
     private final int HTTP_PORT = 80;
-    private final StringBuilder verboseContainer = new StringBuilder();
-    protected final Formatter outFmt = new Formatter(verboseContainer);
+    private StringBuilder verboseContainer;
+    protected Formatter outFmt;
 
     protected HttpcRequest(final String hostString, final Map<String, String> headers, final boolean verbose,
             final String outputFilename) {
@@ -54,8 +57,11 @@ public abstract class HttpcRequest {
     protected String connect() {
         try {
             socket = new Socket(host.url.getHost(), HTTP_PORT);
+            System.out.println(socket.toString());
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            verboseContainer = new StringBuilder();
+            outFmt = new Formatter(verboseContainer);
 
             setRequestHeaders();
             setDataHeaders();
@@ -64,15 +70,23 @@ public abstract class HttpcRequest {
             final String sent = verboseContainer.toString();
             out.println(sent);
 
-            final String received = readData();
+            String received = readData();
+            System.out.println(received);
+            close();
+
+            if(received.contains("HTTP/1.0 30") || received.contains("HTTP/1.1 30")){
+              host.url = new URL(getURL(received));
+              return connect();
+            }
+
             if (verbose) {
                 System.out.println(sent);
                 System.out.println(received);
             }
+
             if (outputFilename != null) {
                 writeToFile(sent, received);
             }
-            close();
             return received;
         } catch (final IOException e) {
             e.printStackTrace();
@@ -91,6 +105,8 @@ public abstract class HttpcRequest {
     }
 
     private void close() throws IOException {
+        outFmt.close();
+        verboseContainer.setLength(0);
         in.close();
         out.close();
         socket.close();
@@ -118,5 +134,39 @@ public abstract class HttpcRequest {
     private String capitalize(final String word) {
         return word == null || word.length() == 0 ? word : word.substring(0, 1).toUpperCase() + word.substring(1);
     }
+
+    private String splitLines(String response){
+        String[] lines = response.split(System.getProperty("line.separator"));
+        for(int i=0; i<lines.length; i++){
+            if(lines[i].startsWith("HTTP") || lines[i].startsWith("Location") || lines[i].startsWith("<") || lines[i].isBlank() || lines[i].startsWith("The") ){
+                lines[i]="";
+            }
+        }
+        StringBuilder finalStringBuilder= new StringBuilder("");
+        for(String s:lines){
+            if(!s.equals("")){
+                finalStringBuilder.append(s).append(System.getProperty("line.separator"));
+            }
+        }
+        return finalStringBuilder.toString();
+    }
+
+    private Map<String, String> convertWithStream(String mapAsString) {
+        return Arrays.stream(mapAsString.split("\\r?\\n"))
+                .map(entry -> entry.split(":"))
+                .collect(Collectors.toMap(entry -> entry[0], entry -> entry[1]));
+    }
+
+    private String getURL(String response){
+        String[] lines = response.split(System.getProperty("line.separator"));
+        String line = "";
+        for (String s : lines) {
+            if (s.startsWith("Location")) {
+                line = s.substring(10);
+            }
+        }
+        return line;
+    }
+
 
 }
