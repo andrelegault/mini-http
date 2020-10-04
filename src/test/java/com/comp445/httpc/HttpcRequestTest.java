@@ -100,7 +100,7 @@ public class HttpcRequestTest {
     @Test
     public void testHttpcRedirectOutputToFile() throws IOException {
         final HttpcGet testRedirect = new HttpcGet("http://google.com/", null, verbose,
-                "whatever.txt");
+                "outputFile.txt");
         final String res = testRedirect.connect();
         assert (res.contains("200 OK"));
     }

@@ -16,11 +16,11 @@ public class HttpcTest {
 
     @Test
     public void testHttpcGet() {
-        final String[] args = { "get", "-o", "outputFilename.txt",
+        final String[] args = { "get", "-o", "outputFile.txt",
                 "http://httpbin.org/get?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertEquals(test.action, "get");
-        assertEquals("outputFilename.txt", test.outputFilename);
+        assertEquals("outputFile.txt", test.outputFilename);
         assertEquals("http://httpbin.org/get?course=networking&assignment=1", test.target);
     }
 
