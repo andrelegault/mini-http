@@ -99,7 +99,7 @@ public class Httpc {
             } else {
                 formatter.printHelp("httpc " + this.action + " [arguments] URL", options);
             }
-            e.printStackTrace();
+            // e.printStackTrace();
         }
     }
 
