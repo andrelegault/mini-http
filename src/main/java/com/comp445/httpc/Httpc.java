@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -48,7 +47,6 @@ public class Httpc {
 
     // All valid actions
     private final Set<String> validActions = Set.of("post", "get");
-    private final Set<String> validCommands = Set.of("post", "get", "help");
     private final String[] supportedSchemes = { "http", "https" };
 
     // Object that parses arguments provided through the CLI
@@ -192,21 +190,6 @@ public class Httpc {
         this.verbose = cmdLine.hasOption("v");
     }
 
-    private Set<String> getOptionValues() {
-        Set<String> vals = new HashSet<String>();
-        for (Option o : cmdLine.getOptions()) {
-            if (o.getValue() != null) {
-                if (o.getValues().length > 1) {
-                    String val = "";
-                    vals.add(val.toLowerCase());
-                } else {
-                    vals.add(o.getValue());
-                }
-            }
-        }
-        return vals;
-    }
-
     /**
      * Searches for a URL in the list of args (excluding options). Sets the target
      * if possible, throws otherwise.
@@ -216,12 +199,9 @@ public class Httpc {
     private void setTarget() throws Exception {
         String testTarget = args[args.length - 1];
         final UrlValidator urlValidator = new UrlValidator(supportedSchemes);
-        if (testTarget != null && !urlValidator.isValid(testTarget)) {
+        if (testTarget == null || !urlValidator.isValid(testTarget)) {
             throw new Exception("Error providing target");
         } else {
-            if (!testTarget.startsWith("http://") && !testTarget.startsWith("https://")) {
-                testTarget = "https://" + testTarget;
-            }
             this.target = testTarget;
         }
     }

@@ -36,7 +36,6 @@ public abstract class HttpcRequest {
     protected HttpcRequest(final String hostString, final Map<String, String> headers, final boolean verbose,
             final String outputFilename) throws MalformedURLException {
         this.url = new URL(hostString);
-        System.out.println(headers);
         this.headers = headers;
         this.verbose = verbose;
         this.outputFilename = outputFilename;
@@ -70,12 +69,14 @@ public abstract class HttpcRequest {
         final String sent = verboseContainer.toString();
         out.println(sent);
 
-        String received = readData();
+        final String received = readData();
         close();
 
         if (verbose) {
+            System.out.println();
             System.out.println(sent);
             System.out.println(received);
+            System.out.println();
         }
 
         if (received.contains("HTTP/1.0 30") || received.contains("HTTP/1.1 30")) {
