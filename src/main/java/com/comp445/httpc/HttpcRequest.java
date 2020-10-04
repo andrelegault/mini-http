@@ -77,13 +77,13 @@ public abstract class HttpcRequest {
                 System.out.println(received);
             }
 
-            if (outputFilename != null) {
-                writeToFile(sent, received);
+            if (received.contains("HTTP/1.0 30") || received.contains("HTTP/1.1 30")) {
+                host.url = new URL(getURL(received));
+                return connect();
             }
 
-            if(received.contains("HTTP/1.0 30") || received.contains("HTTP/1.1 30")){
-              host.url = new URL(getURL(received));
-              return connect();
+            if (outputFilename != null) {
+                writeToFile(sent, received);
             }
 
             return received;
@@ -138,16 +138,17 @@ public abstract class HttpcRequest {
         return word == null || word.length() == 0 ? word : word.substring(0, 1).toUpperCase() + word.substring(1);
     }
 
-    private String splitLines(String response){
+    private String splitLines(String response) {
         String[] lines = response.split(System.getProperty("line.separator"));
-        for(int i=0; i<lines.length; i++){
-            if(lines[i].startsWith("HTTP") || lines[i].startsWith("Location") || lines[i].startsWith("<") || lines[i].isBlank() || lines[i].startsWith("The") ){
-                lines[i]="";
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].startsWith("HTTP") || lines[i].startsWith("Location") || lines[i].startsWith("<")
+                    || lines[i].isBlank() || lines[i].startsWith("The")) {
+                lines[i] = "";
             }
         }
-        StringBuilder finalStringBuilder= new StringBuilder("");
-        for(String s:lines){
-            if(!s.equals("")){
+        StringBuilder finalStringBuilder = new StringBuilder("");
+        for (String s : lines) {
+            if (!s.equals("")) {
                 finalStringBuilder.append(s).append(System.getProperty("line.separator"));
             }
         }
@@ -155,12 +156,11 @@ public abstract class HttpcRequest {
     }
 
     private Map<String, String> convertWithStream(String mapAsString) {
-        return Arrays.stream(mapAsString.split("\\r?\\n"))
-                .map(entry -> entry.split(":"))
+        return Arrays.stream(mapAsString.split("\\r?\\n")).map(entry -> entry.split(":"))
                 .collect(Collectors.toMap(entry -> entry[0], entry -> entry[1]));
     }
 
-    private String getURL(String response){
+    private String getURL(String response) {
         String[] lines = response.split(System.getProperty("line.separator"));
         String line = "";
         for (String s : lines) {
@@ -170,6 +170,5 @@ public abstract class HttpcRequest {
         }
         return line;
     }
-
 
 }

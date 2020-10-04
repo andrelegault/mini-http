@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import org.apache.commons.validator.routines.UrlValidator;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -47,6 +48,7 @@ public class Httpc {
     // All valid actions
     private final Set<String> validActions = Set.of("post", "get");
     private final Set<String> validCommands = Set.of("post", "get", "help");
+    private final String[] supportedSchemes = { "http", "https" };
 
     // Object that parses arguments provided through the CLI
     private final CommandLineParser parser = new DefaultParser();
@@ -210,9 +212,13 @@ public class Httpc {
      */
     private void setTarget() throws Exception {
         String testTarget = args[args.length - 1];
-        if (testTarget != null && (testTarget.isEmpty() || !testTarget.startsWith("http://"))) {
+        final UrlValidator urlValidator = new UrlValidator(supportedSchemes);
+        if (testTarget != null && testTarget.isEmpty() && !urlValidator.isValid(testTarget)) {
             throw new Exception("Error providing target");
         } else {
+            if (!testTarget.startsWith("http://") || !testTarget.startsWith("https://")) {
+                testTarget = "https://" + testTarget;
+            }
             this.target = testTarget;
         }
         // String urlArg = "";
@@ -308,8 +314,6 @@ public class Httpc {
 
     public static void main(final String[] args) {
         final Httpc httpc = new Httpc(args);
-        if (httpc.req != null) {
-            httpc.run();
-        }
+        httpc.run();
     }
 }
