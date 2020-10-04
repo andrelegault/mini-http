@@ -12,7 +12,7 @@ import org.junit.jupiter.api.BeforeAll;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class HttpcRequestTest {
-    final boolean verbose = false;
+    final boolean verbose = true;
 
     final Map<String, String> invalidHeaders = new HashMap<String, String>();
     final Map<String, String> validHeaders = new HashMap<String, String>();
@@ -93,6 +93,14 @@ public class HttpcRequestTest {
     public void testHttpcRedirect() {
         final HttpcGet testRedirect = new HttpcGet("http://google.com/", null, verbose,
                 null);
+        final String res = testRedirect.connect();
+        assert (res.contains("200 OK"));
+    }
+
+    @Test
+    public void testHttpcRedirectOutputToFile() {
+        final HttpcGet testRedirect = new HttpcGet("http://google.com/", null, verbose,
+                "whatever.txt");
         final String res = testRedirect.connect();
         assert (res.contains("200 OK"));
     }
