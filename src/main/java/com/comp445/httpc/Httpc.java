@@ -132,7 +132,7 @@ public class Httpc {
                 .desc("Prints the detail of the response such as protocol, status, and headers.").build();
         final Option optHeaders = Option.builder("h").argName("header:val").required(false).numberOfArgs(2)
                 .valueSeparator(':').desc("Associates headers to HTTP Request with the format 'key:value'.").build();
-        final Option optOutputFilename = Option.builder("o").argName("output").required(false).hasArg()
+        final Option optOutputFilename = Option.builder("o").argName("filename").required(false).hasArg()
                 .desc("Writes to the specified file").build();
         options.addOption(optVerbose);
         options.addOption(optHeaders);
