@@ -216,7 +216,7 @@ public class Httpc {
         if (testTarget != null && testTarget.isEmpty() && !urlValidator.isValid(testTarget)) {
             throw new Exception("Error providing target");
         } else {
-            if (!testTarget.startsWith("http://") || !testTarget.startsWith("https://")) {
+            if (!testTarget.startsWith("http://") && !testTarget.startsWith("https://")) {
                 testTarget = "https://" + testTarget;
             }
             this.target = testTarget;
