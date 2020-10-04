@@ -1,11 +1,13 @@
 package com.comp445.httpc;
 
+import java.net.MalformedURLException;
 import java.util.Map;
 
 public class HttpcPost extends HttpcRequest {
     private final String data;
 
-    public HttpcPost(final String host, Map<String, String> headers, final String data, final boolean verbose, final String outputFilename) {
+    public HttpcPost(final String host, Map<String, String> headers, final String data, final boolean verbose,
+            final String outputFilename) throws MalformedURLException {
         super(host, headers, verbose, outputFilename);
         this.data = data;
     }

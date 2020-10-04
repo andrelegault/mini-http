@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
 import java.util.Arrays;
@@ -21,7 +22,7 @@ public abstract class HttpcRequest {
      * Methods implemented follow https://tools.ietf.org/html/rfc7230#section-3.2
      */
     protected PrintWriter out;
-    private Host host;
+    private URL url;
     private Map<String, String> headers;
     private Socket socket;
     private BufferedReader in;
@@ -33,8 +34,9 @@ public abstract class HttpcRequest {
     protected Formatter outFmt;
 
     protected HttpcRequest(final String hostString, final Map<String, String> headers, final boolean verbose,
-            final String outputFilename) {
-        this.host = new Host(hostString);
+            final String outputFilename) throws MalformedURLException {
+        this.url = new URL(hostString);
+        System.out.println(headers);
         this.headers = headers;
         this.verbose = verbose;
         this.outputFilename = outputFilename;
@@ -54,43 +56,38 @@ public abstract class HttpcRequest {
         }
     }
 
-    protected String connect() {
-        try {
-            socket = new Socket(host.url.getHost(), HTTP_PORT);
-            out = new PrintWriter(socket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            verboseContainer = new StringBuilder();
-            outFmt = new Formatter(verboseContainer);
+    protected String connect() throws IOException {
+        socket = new Socket(url.getHost(), HTTP_PORT);
+        out = new PrintWriter(socket.getOutputStream(), true);
+        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        verboseContainer = new StringBuilder();
+        outFmt = new Formatter(verboseContainer);
 
-            setRequestHeaders();
-            setDataHeaders();
-            outFmt.format("\r%n");
+        setRequestHeaders();
+        setDataHeaders();
+        outFmt.format("\r%n");
 
-            final String sent = verboseContainer.toString();
-            out.println(sent);
+        final String sent = verboseContainer.toString();
+        out.println(sent);
 
-            String received = readData();
-            close();
+        String received = readData();
+        close();
 
-            if (verbose) {
-                System.out.println(sent);
-                System.out.println(received);
-            }
-
-            if (received.contains("HTTP/1.0 30") || received.contains("HTTP/1.1 30")) {
-                host.url = new URL(getURL(received));
-                return connect();
-            }
-
-            if (outputFilename != null) {
-                writeToFile(sent, received);
-            }
-
-            return received;
-        } catch (final IOException e) {
-            e.printStackTrace();
+        if (verbose) {
+            System.out.println(sent);
+            System.out.println(received);
         }
-        return "An error occurred!";
+
+        if (received.contains("HTTP/1.0 30") || received.contains("HTTP/1.1 30")) {
+            url = new URL(getURL(received));
+            return connect();
+        }
+
+        if (outputFilename != null) {
+            writeToFile(sent, received);
+        }
+
+        return received;
     }
 
     private String readData() throws IOException {
@@ -112,8 +109,8 @@ public abstract class HttpcRequest {
     }
 
     private String getQueryOrEmptyString() {
-        final String query = host.url.getQuery();
-        return (query != null && !query.equals("") && !query.equals("/")) ? "?" + host.url.getQuery() : "";
+        final String query = url.getQuery();
+        return (query != null && !query.equals("") && !query.equals("/")) ? "?" + url.getQuery() : "";
     }
 
     private String sanitizePath(String unsanitizedPath) {
@@ -121,8 +118,8 @@ public abstract class HttpcRequest {
     }
 
     private void setRequestHeaders() {
-        outFmt.format("%s %s%s HTTP/1.0\r%n", getMethod(), sanitizePath(host.url.getPath()), getQueryOrEmptyString());
-        outFmt.format("Host: %s\r%n", host.url.getHost());
+        outFmt.format("%s %s%s HTTP/1.0\r%n", getMethod(), sanitizePath(url.getPath()), getQueryOrEmptyString());
+        outFmt.format("Host: %s\r%n", url.getHost());
         outFmt.format("Upgrade-Insecure-Requests: 1\r%n");
         outFmt.format("Connection: Close\r%n");
         outFmt.format("Accept-Encoding: gzip, deflate, br\r%n");

@@ -36,14 +36,14 @@ public class HttpcRequestTest {
     }
 
     @Test
-    public void testHttpcRequestGetWithNoSlash() {
+    public void testHttpcRequestGetWithNoSlash() throws IOException {
         final HttpcGet testGet = new HttpcGet("https://www.google.com", null, verbose, null);
         final String res = testGet.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcRequestGet() {
+    public void testHttpcRequestGet() throws IOException {
         final HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", null, verbose,
                 null);
         final String res = testGet.connect();
@@ -51,7 +51,7 @@ public class HttpcRequestTest {
     }
 
     @Test
-    public void testHttpcGetEmptyHeaders() {
+    public void testHttpcGetEmptyHeaders() throws IOException {
         final HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", emptyHeaders,
                 verbose, null);
         final String res = testGet.connect();
@@ -59,7 +59,7 @@ public class HttpcRequestTest {
     }
 
     @Test
-    public void testHttpcGetValidHeaders() {
+    public void testHttpcGetValidHeaders() throws IOException {
         final HttpcGet testGet = new HttpcGet("http://httpbin.org/get?course=networking&assignment=1", validHeaders,
                 verbose, null);
         final String res = testGet.connect();
@@ -67,14 +67,14 @@ public class HttpcRequestTest {
     }
 
     @Test
-    public void testPost() {
+    public void testPost() throws IOException {
         final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, null, verbose, null);
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testPostWithData() {
+    public void testPostWithData() throws IOException {
         final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, dataFromFile, verbose,
                 "outputFile.txt");
         final String res = testPost.connect();
@@ -82,7 +82,7 @@ public class HttpcRequestTest {
     }
 
     @Test
-    public void testPostWithDataString() {
+    public void testPostWithDataString() throws IOException {
         final HttpcPost testPost = new HttpcPost("http://httpbin.org/post", null, validDataString, verbose,
                 "outputFile.txt");
         final String res = testPost.connect();
@@ -90,7 +90,7 @@ public class HttpcRequestTest {
     }
 
     @Test
-    public void testHttpcRedirect() {
+    public void testHttpcRedirect() throws IOException {
         final HttpcGet testRedirect = new HttpcGet("http://google.com/", null, verbose,
                 null);
         final String res = testRedirect.connect();
@@ -98,7 +98,7 @@ public class HttpcRequestTest {
     }
 
     @Test
-    public void testHttpcRedirectOutputToFile() {
+    public void testHttpcRedirectOutputToFile() throws IOException {
         final HttpcGet testRedirect = new HttpcGet("http://google.com/", null, verbose,
                 "whatever.txt");
         final String res = testRedirect.connect();
