@@ -1,5 +1,5 @@
 # httpc
-Software library and tool implementing HTTP/1.1 networking protocols (GET, and POST). This project uses maven.
+Software library and tool implementing HTTP/1.1 networking protocols (GET, and POST). This project uses maven for dependencies, building and testing (JUnit5).
 
 ## Usage
 
