@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
 import org.apache.commons.validator.routines.UrlValidator;
 
 import org.apache.commons.cli.DefaultParser;
@@ -93,13 +94,14 @@ public class Httpc {
         this.args = args;
         try {
             parse();
+            run();
         } catch (Exception e) {
             if (this.action == null || this.action.equalsIgnoreCase("help")) {
                 System.err.println(usageGeneral);
             } else {
                 formatter.printHelp("httpc " + this.action + " [arguments] URL", options);
             }
-            // e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
@@ -126,11 +128,11 @@ public class Httpc {
      * Adds the options necessary for the post, and help commands.
      */
     private void prepareCommonOptions() {
-        final Option optVerbose = Option.builder("v").required(false).hasArg(false)
+        final Option optVerbose = Option.builder("v").argName("verbose").required(false).hasArg(false)
                 .desc("Prints the detail of the response such as protocol, status, and headers.").build();
-        final Option optHeaders = Option.builder("h").required(false).hasArgs().valueSeparator(':')
-                .desc("Associates headers to HTTP Request with the format 'key:value'.").build();
-        final Option optOutputFilename = Option.builder("o").required(false).hasArg()
+        final Option optHeaders = Option.builder("h").argName("header:val").required(false).numberOfArgs(2)
+                .valueSeparator(':').desc("Associates headers to HTTP Request with the format 'key:value'.").build();
+        final Option optOutputFilename = Option.builder("o").argName("output").required(false).hasArg()
                 .desc("Writes to the specified file").build();
         options.addOption(optVerbose);
         options.addOption(optHeaders);
@@ -156,6 +158,7 @@ public class Httpc {
 
     /**
      * Sets the `headers` variable.
+     * 
      */
     private void setHeaders() {
         final Properties properties = cmdLine.getOptionProperties("h");
@@ -213,7 +216,7 @@ public class Httpc {
     private void setTarget() throws Exception {
         String testTarget = args[args.length - 1];
         final UrlValidator urlValidator = new UrlValidator(supportedSchemes);
-        if (testTarget != null && testTarget.isEmpty() && !urlValidator.isValid(testTarget)) {
+        if (testTarget != null && !urlValidator.isValid(testTarget)) {
             throw new Exception("Error providing target");
         } else {
             if (!testTarget.startsWith("http://") && !testTarget.startsWith("https://")) {
@@ -221,23 +224,6 @@ public class Httpc {
             }
             this.target = testTarget;
         }
-        // String urlArg = "";
-        // int possibleUrlArgs = 0;
-        // final Set<String> vals = getOptionValues();
-        // for (String arg : args) {
-        // if (!arg.isEmpty() && arg.charAt(0) != '-' && !isRequest(arg) &&
-        // !arg.equalsIgnoreCase("help")
-        // && !vals.contains(arg.toLowerCase())) {
-        // urlArg = arg;
-        // possibleUrlArgs++;
-        // System.out.println(urlArg);
-        // }
-        // }
-        // if (possibleUrlArgs != 1) {
-        // throw new Exception("Error providing target");
-        // } else {
-        // this.target = urlArg;
-        // }
     }
 
     /**
@@ -301,7 +287,7 @@ public class Httpc {
         }
     }
 
-    private void run() {
+    private void run() throws IOException {
         if (this.action.equalsIgnoreCase("get")) {
             this.req = new HttpcGet(this.target, this.headers, this.verbose, this.outputFilename);
         } else if (this.action.equalsIgnoreCase("post")) {
@@ -313,7 +299,6 @@ public class Httpc {
     }
 
     public static void main(final String[] args) {
-        final Httpc httpc = new Httpc(args);
-        httpc.run();
+        new Httpc(args);
     }
 }
