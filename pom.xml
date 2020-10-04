@@ -7,10 +7,27 @@
   <groupId>com.comp445.httpc</groupId>
   <artifactId>httpc</artifactId>
   <version>1.0-SNAPSHOT</version>
+  
+  <contributors>
+    <contributor>
+      <name>Andre Parsons-Legault</name>
+    </contributor>
+    <contributor>
+      <name>Michel Rahme</name>
+    </contributor>
+  </contributors>
 
   <name>httpc</name>
-  <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
+  <url>https://github.com/andrelegault/httpc.git</url>
+  <description>Assignment 1 for COMP 445 (FALL 2020)</description>
+  <inceptionYear>2020</inceptionYear>
+
+  <scm>
+    <connection>scm:git:https://github.com/andrelegault/httpc.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com:andrelegault/httpc.git</developerConnection>
+    <url>https://github.com/andrelegault/httpc/tree/${project.scm.tag}</url>
+    <tag>master</tag>
+  </scm>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
