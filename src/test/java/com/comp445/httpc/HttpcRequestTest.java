@@ -25,7 +25,7 @@ public class HttpcRequestTest {
     @BeforeAll
     public void testBeforeAll() {
         try {
-            dataFromFile = Files.readString(Path.of("test.txt"));
+            dataFromFile = Files.readString(Path.of("inputFile.txt"));
         } catch (IOException e) {
             e.printStackTrace();
         }

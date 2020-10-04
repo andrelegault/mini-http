@@ -87,7 +87,7 @@ public class HttpcTest {
 
     @Test
     public void testHttpcGetWithDataFilename() {
-        final String[] args = { "get", "-v", "-f", "test.txt",
+        final String[] args = { "get", "-v", "-f", "inputFile.txt",
                 "http://httpbin.org/get?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertNull(test.req);
@@ -104,7 +104,7 @@ public class HttpcTest {
 
     @Test
     public void testHttpcPostWithInvalidData() {
-        final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'", "-f", "test.txt",
+        final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'", "-f", "inputFile.txt",
                 "http://httpbin.org/post?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertNull(test.req);
@@ -112,7 +112,7 @@ public class HttpcTest {
 
     @Test
     public void testHttpcPostWithValidFileData() {
-        final String[] args = { "post", "-v", "-f", "test.txt",
+        final String[] args = { "post", "-v", "-f", "inputFile.txt",
                 "http://httpbin.org/post?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertEquals("1234test\n", test.data);
