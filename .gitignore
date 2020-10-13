@@ -35,3 +35,6 @@ buildNumber.properties
 
 # intelliJ Files
 .idea
+
+# vs code files
+.vscode
