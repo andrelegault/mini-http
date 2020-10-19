@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.comp445.httpc</groupId>
-  <artifactId>httpc</artifactId>
+  <artifactId>client</artifactId>
   <version>1.0-SNAPSHOT</version>
   
   <contributors>
@@ -17,7 +17,7 @@
     </contributor>
   </contributors>
 
-  <name>httpc</name>
+  <name>client</name>
   <url>https://github.com/andrelegault/httpc.git</url>
   <description>Assignment 1 for COMP 445 (FALL 2020)</description>
   <inceptionYear>2020</inceptionYear>
