@@ -38,3 +38,7 @@ buildNumber.properties
 
 # vs code files
 .vscode
+
+.classpath
+
+instructions*.pdf
