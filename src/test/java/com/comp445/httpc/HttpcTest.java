@@ -44,7 +44,8 @@ public class HttpcTest {
 
     @Test
     public void testHttpcGetWithUndefinedHeader() {
-        final String[] args = { "get", "-v", "-h", "key:val", "-h", "-h", "http://httpbin.org/get?course=networking&assignment=1" };
+        final String[] args = { "get", "-v", "-h", "key:val", "-h", "-h",
+                "http://httpbin.org/get?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertNull(test.req);
     }

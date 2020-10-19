@@ -171,11 +171,13 @@ public class Httpc {
      * 
      * @throws IOException
      */
-    private void setData(final boolean hasJsonData, final boolean hasFileData) throws IOException {
-        if (hasJsonData || hasFileData) {
-            this.data = hasJsonData ? cmdLine.getOptionValue("d")
-                    : loadFileContents(Path.of(cmdLine.getOptionValue("f")));
+    private void setData() throws IOException {
+        if (cmdLine.hasOption("d")) {
+            this.data = cmdLine.getOptionValue("d");
+        } else if (cmdLine.hasOption("f")) {
+            loadFileContents(Path.of(cmdLine.getOptionValue("f")));
         }
+        System.out.println(this.data);
     }
 
     /**
@@ -261,9 +263,10 @@ public class Httpc {
                 final boolean hasJsonData = cmdLine.hasOption("d");
                 final boolean hasFileData = cmdLine.hasOption("f");
                 if ((!hasJsonData && !hasFileData) || (hasJsonData ^ hasFileData)) {
+                    System.out.println("hasJsonData: " + hasJsonData + ", hasFileData: " + hasFileData);
                     setVerbose();
                     setHeaders();
-                    setData(hasFileData, hasJsonData);
+                    setData();
                     setOutputFilename();
                 } else {
                     throw new Exception("Invalid use of -d or -f");
