@@ -123,7 +123,7 @@ public class Httpc {
     }
 
     /**
-     * Adds the options necessary for the post, and help commands.
+     * Adds the options necessary for both post and get.
      */
     private void prepareCommonOptions() {
         final Option optVerbose = Option.builder("v").argName("verbose").required(false).hasArg(false)
@@ -137,12 +137,15 @@ public class Httpc {
         options.addOption(optOutputFilename);
     }
 
+    /**
+     * Prepares get options.
+     */
     private void prepareGetOptions() {
         prepareCommonOptions();
     }
 
     /**
-     * Adds the options necessary for the post command.
+     * Prepares post options.
      */
     private void preparePostOptions() {
         prepareCommonOptions();
