@@ -175,9 +175,8 @@ public class Httpc {
         if (cmdLine.hasOption("d")) {
             this.data = cmdLine.getOptionValue("d");
         } else if (cmdLine.hasOption("f")) {
-            loadFileContents(Path.of(cmdLine.getOptionValue("f")));
+            this.data = loadFileContents(Path.of(cmdLine.getOptionValue("f")));
         }
-        System.out.println(this.data);
     }
 
     /**
