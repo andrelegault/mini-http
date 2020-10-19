@@ -168,9 +168,11 @@ public class Httpc {
      * 
      * @throws IOException
      */
-    private void setData() throws IOException {
-        this.data = cmdLine.hasOption("d") ? cmdLine.getOptionValue("d")
-                : loadFileContents(Path.of(cmdLine.getOptionValue("f")));
+    private void setData(final boolean hasJsonData, final boolean hasFileData) throws IOException {
+        if (hasJsonData || hasFileData) {
+            this.data = hasJsonData ? cmdLine.getOptionValue("d")
+                    : loadFileContents(Path.of(cmdLine.getOptionValue("f")));
+        }
     }
 
     /**
@@ -253,10 +255,12 @@ public class Httpc {
                 preparePostOptions();
                 this.cmdLine = parser.parse(options, args);
                 setTarget();
-                if (cmdLine.hasOption("d") ^ cmdLine.hasOption("f")) {
+                final boolean hasJsonData = cmdLine.hasOption("d");
+                final boolean hasFileData = cmdLine.hasOption("f");
+                if ((!hasJsonData && !hasFileData) || (hasJsonData ^ hasFileData)) {
                     setVerbose();
                     setHeaders();
-                    setData();
+                    setData(hasFileData, hasJsonData);
                     setOutputFilename();
                 } else {
                     throw new Exception("Invalid use of -d or -f");
