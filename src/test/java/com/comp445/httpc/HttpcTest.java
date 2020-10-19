@@ -95,6 +95,13 @@ public class HttpcTest {
     }
 
     @Test
+    public void testHttpcGetInvalidHeader() {
+        final String[] args = { "get", "-h", "http://httpbin.org/get?course=networking&assignment=1" };
+        Httpc test = new Httpc(args);
+        assertEquals(null, test.target);
+    }
+
+    @Test
     public void testHttpcPostWithData() {
         final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'",
                 "http://httpbin.org/post?course=networking&assignment=1" };
@@ -149,6 +156,14 @@ public class HttpcTest {
         final String[] args = { "post", "-v", "http://httpbin.org/post?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
         assertEquals("http://httpbin.org/post?course=networking&assignment=1", test.target);
+        assertEquals(null, test.data);
+    }
+
+    @Test
+    public void testHttpcPostInvalidHeader() {
+        final String[] args = { "post", "-h", "http://httpbin.org/post?course=networking&assignment=1" };
+        Httpc test = new Httpc(args);
+        assertEquals(null, test.target);
         assertEquals(null, test.data);
     }
 }
