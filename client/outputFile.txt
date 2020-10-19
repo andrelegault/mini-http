@@ -1,0 +1,39 @@
+POST /post HTTP/1.0
+Host: httpbin.org
+Upgrade-Insecure-Requests: 1
+Connection: Close
+Accept-Encoding: gzip, deflate, br
+DNT: 1
+Content-Length: 9
+Content-Type: text/plain
+
+1234test
+
+
+HTTP/1.1 200 OK
+Date: Mon, 19 Oct 2020 21:27:18 GMT
+Content-Type: application/json
+Content-Length: 435
+Connection: close
+Server: gunicorn/19.9.0
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true
+
+{
+  "args": {}, 
+  "data": "1234test\n", 
+  "files": {}, 
+  "form": {}, 
+  "headers": {
+    "Accept-Encoding": "gzip, deflate, br", 
+    "Content-Length": "9", 
+    "Content-Type": "text/plain", 
+    "Dnt": "1", 
+    "Host": "httpbin.org", 
+    "Upgrade-Insecure-Requests": "1", 
+    "X-Amzn-Trace-Id": "Root=1-5f8e04b6-021abb470b0303c23407f4c3"
+  }, 
+  "json": null, 
+  "origin": "65.94.85.187", 
+  "url": "http://httpbin.org/post"
+}
