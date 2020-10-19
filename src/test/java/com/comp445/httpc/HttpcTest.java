@@ -142,4 +142,12 @@ public class HttpcTest {
         assertEquals("'{ \"Assignment\": 1 }'", test.data);
         assertEquals("outputFile.txt", test.outputFilename);
     }
+
+    @Test
+    public void testHttpcPostNoBody() {
+        final String[] args = { "post", "-v", "http://httpbin.org/post?course=networking&assignment=1" };
+        Httpc test = new Httpc(args);
+        assertEquals("http://httpbin.org/post?course=networking&assignment=1", test.target);
+        assertEquals(null, test.data);
+    }
 }
