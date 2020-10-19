@@ -203,7 +203,10 @@ public class Httpc {
      * @throws Exception
      */
     private void setTarget() throws Exception {
-        String testTarget = args[args.length - 1];
+        final String testTarget = args[args.length - 1];
+        if (args.length > 1 && args[args.length-2] == "-h") {
+            throw new Exception("Invalid target");
+        }
         final UrlValidator urlValidator = new UrlValidator(supportedSchemes);
         if (testTarget == null || !urlValidator.isValid(testTarget)) {
             throw new Exception("Error providing target");
@@ -262,7 +265,6 @@ public class Httpc {
                 final boolean hasJsonData = cmdLine.hasOption("d");
                 final boolean hasFileData = cmdLine.hasOption("f");
                 if ((!hasJsonData && !hasFileData) || (hasJsonData ^ hasFileData)) {
-                    System.out.println("hasJsonData: " + hasJsonData + ", hasFileData: " + hasFileData);
                     setVerbose();
                     setHeaders();
                     setData();
