@@ -9,10 +9,8 @@ import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Formatter;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public abstract class HttpcRequest {
     /**
@@ -134,28 +132,6 @@ public abstract class HttpcRequest {
 
     private String capitalize(final String word) {
         return word == null || word.length() == 0 ? word : word.substring(0, 1).toUpperCase() + word.substring(1);
-    }
-
-    private String splitLines(String response) {
-        String[] lines = response.split(System.getProperty("line.separator"));
-        for (int i = 0; i < lines.length; i++) {
-            if (lines[i].startsWith("HTTP") || lines[i].startsWith("Location") || lines[i].startsWith("<")
-                    || lines[i].isBlank() || lines[i].startsWith("The")) {
-                lines[i] = "";
-            }
-        }
-        StringBuilder finalStringBuilder = new StringBuilder("");
-        for (String s : lines) {
-            if (!s.equals("")) {
-                finalStringBuilder.append(s).append(System.getProperty("line.separator"));
-            }
-        }
-        return finalStringBuilder.toString();
-    }
-
-    private Map<String, String> convertWithStream(String mapAsString) {
-        return Arrays.stream(mapAsString.split("\\r?\\n")).map(entry -> entry.split(":"))
-                .collect(Collectors.toMap(entry -> entry[0], entry -> entry[1]));
     }
 
     private String getURL(String response) {

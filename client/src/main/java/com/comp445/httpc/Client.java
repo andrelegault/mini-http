@@ -18,27 +18,10 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-// import org.json.JSONObject;
-
 public class Client {
     // General usage instructions
     private final String usageGeneral = "Usage:\n".concat("   httpc command [arguments] URL\n")
             .concat("The commands are:\n").concat("   get     executes a HTTP GET request and prints the response.\n")
-            .concat("   post    executes a HTTP POST request and prints the response.\n")
-            .concat("   help    prints this screen.\n\n")
-            .concat("Use \"httpc help [command]\" for more information about a command.");
-
-    // Usage of the get command
-    private final String usageGet = "httpc help get\n".concat("   usage: httpc get [-v] [-h key:value]* URL\n")
-            .concat("Get executes a HTTP GET request for a given URL.\n")
-            .concat("   -v      Prints the detail of the response such as protocol, status, and headers.\n")
-            .concat("   -h key:value    Associates headers to HTTP Request with the format 'key:value'.");
-
-    // Usage of the post command
-    private final String usagePost = "httpc help post\n"
-            .concat("    usage: httpc post [-v] [-h key:value]* [-d inline-data] [-f file] URL\n")
-            .concat("Post executes a HTTP POST request for a given URL with inline data or from file.\n")
-            .concat("   get     executes a HTTP GET request and prints the response.\n")
             .concat("   post    executes a HTTP POST request and prints the response.\n")
             .concat("   help    prints this screen.\n\n")
             .concat("Use \"httpc help [command]\" for more information about a command.");
@@ -204,7 +187,7 @@ public class Client {
      */
     private void setTarget() throws Exception {
         final String testTarget = args[args.length - 1];
-        if (args.length > 1 && args[args.length-2] == "-h") {
+        if (args.length > 1 && args[args.length - 2] == "-h") {
             throw new Exception("Invalid target");
         }
         final UrlValidator urlValidator = new UrlValidator(supportedSchemes);
