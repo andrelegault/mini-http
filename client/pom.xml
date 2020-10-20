@@ -18,7 +18,7 @@
   </contributors>
 
   <name>client</name>
-  <url>https://github.com/andrelegault/httpc.git</url>
+  <url>https://github.com/andrelegault/httpc/tree/master/client</url>
   <description>Assignment 1 for COMP 445 (FALL 2020)</description>
   <inceptionYear>2020</inceptionYear>
 
@@ -83,7 +83,7 @@
           <configuration>
             <archive>
               <manifest>
-                <mainClass>com.comp445.httpc.Httpc</mainClass>
+                <mainClass>com.comp445.httpc.Client</mainClass>
               </manifest>
             </archive>
             <descriptorRefs>

@@ -6,36 +6,36 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-public class HttpcTest {
+public class ClientTest {
     @Test
-    public void testHttpcGetBadOrder() {
+    public void testClientGetBadOrder() {
         final String[] args = { "get", "http://httpbin.org/get?course=networking&assignment=1", "-v" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertNull(test.req);
     }
 
     @Test
-    public void testHttpcGet() {
+    public void testClientGet() {
         final String[] args = { "get", "-o", "outputFile.txt",
                 "http://httpbin.org/get?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertEquals(test.action, "get");
         assertEquals("outputFile.txt", test.outputFilename);
         assertEquals("http://httpbin.org/get?course=networking&assignment=1", test.target);
     }
 
     @Test
-    public void testHttpcGetVerbose() {
+    public void testClientGetVerbose() {
         final String[] args = { "get", "-v", "http://httpbin.org/get?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertEquals("get", test.action);
         assertTrue(test.verbose);
     }
 
     @Test
-    public void testHttpcGetWithSingleHeader() {
+    public void testClientGetWithSingleHeader() {
         final String[] args = { "get", "-v", "-h", "key:val", "http://httpbin.org/get?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertEquals("get", test.action);
         assertTrue(test.verbose);
         assertEquals(1, test.headers.size());
@@ -43,18 +43,18 @@ public class HttpcTest {
     }
 
     @Test
-    public void testHttpcGetWithUndefinedHeader() {
+    public void testClientGetWithUndefinedHeader() {
         final String[] args = { "get", "-v", "-h", "key:val", "-h", "-h",
                 "http://httpbin.org/get?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertNull(test.req);
     }
 
     @Test
-    public void testHttpcGetWithTwoHeaders() {
+    public void testClientGetWithTwoHeaders() {
         final String[] args = { "get", "-v", "-h", "key:val", "-h", "anotherKey:anotherVal",
                 "http://httpbin.org/get?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertEquals("get", test.action);
         assertTrue(test.verbose);
         assertEquals(2, test.headers.size());
@@ -63,106 +63,106 @@ public class HttpcTest {
     }
 
     @Test
-    public void testHttpcGetWithInvalidHeader() {
+    public void testClientGetWithInvalidHeader() {
         final String[] args = { "get", "-v", "-h", "get", "-h", "anotherKey:anotherVal",
                 "http://httpbin.org/get?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertNull(test.req);
     }
 
     @Test
-    public void testHttpcGetWithDataString() {
+    public void testClientGetWithDataString() {
         final String[] args = { "get", "-v", "-d", "'{ \"Assignment\": 1 }'",
                 "http://httpbin.org/get?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertNull(test.req);
     }
 
     @Test
-    public void testHttpcPostWithInvalidDataFilename() {
+    public void testClientPostWithInvalidDataFilename() {
         final String[] args = { "post", "-v", "-f", "idontexist.txt",
                 "http://httpbin.org/get?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertNull(test.req);
     }
 
     @Test
-    public void testHttpcGetWithDataFilename() {
+    public void testClientGetWithDataFilename() {
         final String[] args = { "get", "-v", "-f", "inputFile.txt",
                 "http://httpbin.org/get?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertNull(test.req);
     }
 
     @Test
-    public void testHttpcGetInvalidHeader() {
+    public void testClientGetInvalidHeader() {
         final String[] args = { "get", "-h", "http://httpbin.org/get?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertEquals(null, test.target);
     }
 
     @Test
-    public void testHttpcPostWithData() {
+    public void testClientPostWithData() {
         final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'",
                 "http://httpbin.org/post?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertEquals("post", test.action);
         assertTrue(test.verbose);
     }
 
     @Test
-    public void testHttpcPostWithInvalidData() {
+    public void testClientPostWithInvalidData() {
         final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'", "-f", "inputFile.txt",
                 "http://httpbin.org/post?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertNull(test.req);
     }
 
     @Test
-    public void testHttpcPostWithValidFileData() {
+    public void testClientPostWithValidFileData() {
         final String[] args = { "post", "-v", "-f", "inputFile.txt",
                 "http://httpbin.org/post?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertEquals("1234test\n", test.data);
     }
 
     @Test
-    public void testHttpcPostWithValidStringData() {
+    public void testClientPostWithValidStringData() {
         final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'",
                 "http://httpbin.org/post?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertEquals("'{ \"Assignment\": 1 }'", test.data);
     }
 
     @Test
-    public void testHttpcGetOutputToFile() {
+    public void testClientGetOutputToFile() {
         final String[] args = { "get", "-v", "-o", "outputFile.txt",
                 "http://httpbin.org/get?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertEquals("outputFile.txt", test.outputFilename);
     }
 
     @Test
-    public void testHttpcPostOutputToFile() {
+    public void testClientPostOutputToFile() {
         final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'", "-o", "outputFile.txt",
                 "http://httpbin.org/post?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertEquals("'{ \"Assignment\": 1 }'", test.data);
         assertEquals("outputFile.txt", test.outputFilename);
     }
 
     @Test
-    public void testHttpcPostNoBody() {
+    public void testClientPostNoBody() {
         final String[] args = { "post", "-v", "http://httpbin.org/post?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertEquals("http://httpbin.org/post?course=networking&assignment=1", test.target);
         assertEquals(null, test.data);
     }
 
     @Test
-    public void testHttpcPostInvalidHeader() {
+    public void testClientPostInvalidHeader() {
         final String[] args = { "post", "-h", "http://httpbin.org/post?course=networking&assignment=1" };
-        Httpc test = new Httpc(args);
+        Client test = new Client(args);
         assertEquals(null, test.target);
         assertEquals(null, test.data);
     }

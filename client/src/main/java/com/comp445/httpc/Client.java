@@ -20,7 +20,7 @@ import org.apache.commons.cli.ParseException;
 
 // import org.json.JSONObject;
 
-public class Httpc {
+public class Client {
     // General usage instructions
     private final String usageGeneral = "Usage:\n".concat("   httpc command [arguments] URL\n")
             .concat("The commands are:\n").concat("   get     executes a HTTP GET request and prints the response.\n")
@@ -88,7 +88,7 @@ public class Httpc {
      * @param args Arguments provided through CLI.
      * @throws Exception
      */
-    public Httpc(final String[] args) {
+    public Client(final String[] args) {
         this.args = args;
         try {
             parse();
@@ -290,6 +290,6 @@ public class Httpc {
     }
 
     public static void main(final String[] args) {
-        new Httpc(args);
+        new Client(args);
     }
 }
