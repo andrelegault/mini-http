@@ -26,14 +26,14 @@ public abstract class HttpcRequest {
     private BufferedReader in;
     private final boolean verbose;
     private final String outputFilename;
+    private static final int DEFAULT_PORT = 80;
 
-    private final int HTTP_PORT = 80;
     private StringBuilder verboseContainer;
     protected Formatter outFmt;
 
-    protected HttpcRequest(final String hostString, final Map<String, String> headers, final boolean verbose,
-            final String outputFilename) throws MalformedURLException {
-        this.url = new URL(hostString);
+    protected HttpcRequest(final URL target, final Map<String, String> headers, final boolean verbose,
+            final String outputFilename) {
+        this.url = target;
         this.headers = headers;
         this.verbose = verbose;
         this.outputFilename = outputFilename;
@@ -54,7 +54,8 @@ public abstract class HttpcRequest {
     }
 
     protected String connect() throws IOException {
-        socket = new Socket(url.getHost(), HTTP_PORT);
+        final int port = url.getPort();
+        socket = new Socket(url.getHost(), port != -1 ? port : DEFAULT_PORT);
         out = new PrintWriter(socket.getOutputStream(), true);
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         verboseContainer = new StringBuilder();

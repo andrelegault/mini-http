@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.commons.validator.routines.UrlValidator;
+import java.net.URL;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -30,7 +30,6 @@ public class Client {
 
     // All valid actions
     private final Set<String> validActions = Set.of("post", "get");
-    private final String[] supportedSchemes = { "http", "https" };
 
     // Object that parses arguments provided through the CLI
     private final CommandLineParser parser = new DefaultParser();
@@ -60,7 +59,7 @@ public class Client {
     protected String action;
 
     // Request target
-    protected String target;
+    protected URL target;
 
     // Filename to output to
     protected String outputFilename;
@@ -190,12 +189,8 @@ public class Client {
         if (args.length > 1 && args[args.length - 2] == "-h") {
             throw new Exception("Invalid target");
         }
-        final UrlValidator urlValidator = new UrlValidator(supportedSchemes);
-        if (testTarget == null || !urlValidator.isValid(testTarget)) {
-            throw new Exception("Error providing target");
-        } else {
-            this.target = testTarget;
-        }
+
+        this.target = new URL(testTarget); // throws if invalid
     }
 
     /**
