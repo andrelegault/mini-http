@@ -21,7 +21,9 @@ public class ClientTest {
         Client test = new Client(args);
         assertEquals(test.action, "get");
         assertEquals("outputFile.txt", test.outputFilename);
-        assertEquals("http://httpbin.org/get?course=networking&assignment=1", test.target);
+        assertEquals("httpbin.org", test.target.getHost());
+        assertEquals("/get", test.target.getPath());
+        assertEquals("course=networking&assignment=1", test.target.getQuery());
     }
 
     @Test
@@ -37,6 +39,18 @@ public class ClientTest {
         final String[] args = { "get", "-v", "-h", "key:val", "http://httpbin.org/get?course=networking&assignment=1" };
         Client test = new Client(args);
         assertEquals("get", test.action);
+        assertTrue(test.verbose);
+        assertEquals(1, test.headers.size());
+        assertEquals("val", test.headers.get("key"));
+    }
+
+    @Test
+    public void testClientGetSingleHeaderWithPort() {
+        final String[] args = { "get", "-v", "-h", "key:val", "http://localhost:8081" };
+        Client test = new Client(args);
+        assertEquals("get", test.action);
+        assertEquals("localhost", test.target.getHost());
+        assertEquals(8081, test.target.getPort());
         assertTrue(test.verbose);
         assertEquals(1, test.headers.size());
         assertEquals("val", test.headers.get("key"));
@@ -155,7 +169,7 @@ public class ClientTest {
     public void testClientPostNoBody() {
         final String[] args = { "post", "-v", "http://httpbin.org/post?course=networking&assignment=1" };
         Client test = new Client(args);
-        assertEquals("http://httpbin.org/post?course=networking&assignment=1", test.target);
+        assertEquals("httpbin.org", test.target.getHost());
         assertEquals(null, test.data);
     }
 
