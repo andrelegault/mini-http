@@ -7,9 +7,6 @@ import java.util.regex.Pattern;
  * This class represents a response sent by an httpc server.
  */
 public class HttpcResponse {
-    // Regex that matches any valid http request header
-    private static Pattern pattern = Pattern.compile("[Hh][Tt][Tt][Pp]\\/1\\.[10] \\/(\\w+\\/)*(?!\\/)");
-
     // Version of HTTP supported by this response.
     private static final String VERSION = "1.0";
 

@@ -20,6 +20,9 @@ import org.apache.commons.cli.ParseException;
  *
  */
 public class Server {
+    // Regex that matches any valid http request header
+    protected static final Pattern headerPattern = Pattern
+            .compile("([Gg][Ee][Tt]|[Pp][Oo][Ss][Tt]) (\\/(\\w+\\/)*((\\w+\\.\\w+)|\\w+)) [Hh][Tt][Tt][Pp]\\/1\\.[10]");
     final String[] args;
 
     // Object that parses arguments provided through the CLI
@@ -65,6 +68,17 @@ public class Server {
         if (cmdLine.hasOption("p")) {
             this.port = Integer.parseInt(cmdLine.getOptionValue("p"));
         }
+    }
+
+    /**
+     * Returns whether the provided http header is valid.
+     * 
+     * @param httpHeader First line of the http request.
+     * @return true if the header is valid; false otherwise.
+     */
+    public static Matcher getHeaderMatcher(final String httpHeader) {
+        final Matcher matcher = headerPattern.matcher(httpHeader);
+        return matcher.find() ? matcher : null;
     }
 
     private void setDataDir() throws Exception {
