@@ -1,10 +1,12 @@
 package com.comp445;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
- * This class represents a response sent by an httpc server.
+ * This class represents a response sent by an httpc server. The logic should be
+ * on the side of the server. This class shouldn't mess with the filesystem, or
+ * check permissions or anything like that.
  */
 public class HttpcResponse {
     // Version of HTTP supported by this response.
@@ -13,8 +15,13 @@ public class HttpcResponse {
     // Protocol supported by this response.
     private static final String PROTOCOL = "HTTP";
 
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss z");
+
     // Status code of this response.
     private final int statusCode;
+
+    // Response body.
+    public final String body;
 
     /**
      * Constructor.
@@ -23,24 +30,26 @@ public class HttpcResponse {
      */
     public HttpcResponse(final int statusCode) {
         this.statusCode = statusCode;
+        this.body = null;
     }
 
     /**
-     * Returns whether the provided http header is valid.
+     * Constructor.
      * 
-     * @param httpHeader First line of the http request.
-     * @return true if the header is valid; false otherwise.
+     * @param statusCode Status code for the response.
      */
-    public static boolean isValid(final String httpHeader) {
-        final Matcher matcher = pattern.matcher(httpHeader);
-        return matcher.find();
+    public HttpcResponse(final int statusCode, final String body) {
+        this.statusCode = statusCode;
+        this.body = body;
     }
 
     /**
      * Gets a response message, given a status code. source:
      * https://tools.ietf.org/html/rfc1945#page-26
      * 
-     * We don't support 3XX status codes as we only host files.
+     * We don't support 3XX status codes as we only host files. Apparently we only
+     * have to support 5 codes (source: sectheta twitch livestream on oct. 20,
+     * 2020). Pretty sure the codes to support are 200, 202, 400, 403, and 404.
      * 
      * @param statusCode Status code.
      * @return Message associated to the status code.
@@ -78,6 +87,19 @@ public class HttpcResponse {
      * @return String representation of this object.
      */
     public String toString() {
-        return PROTOCOL + "/" + VERSION + " " + this.statusCode + " " + getStatusCodeResponse(this.statusCode);
+        String response = PROTOCOL + "/" + VERSION + " " + this.statusCode + " "
+                + getStatusCodeResponse(this.statusCode);
+        response += "\r\nDate: " + getDate();
+        response += "\r\nConnection: Close";
+        if (body != null) {
+            response += "\r\nContent-Type: text/html";
+            response += "\r\nContent-Length: " + body.length();
+            response += "\r\n\r\n" + body;
+        }
+        return response;
+    }
+
+    private String getDate() {
+        return dateFormat.format(new Date());
     }
 }
