@@ -58,6 +58,8 @@ public class HttpcResponse {
         switch (statusCode) {
             case 200:
                 return "OK";
+            case 201:
+                return "Created";
             case 202:
                 return "Accepted";
             case 400:
