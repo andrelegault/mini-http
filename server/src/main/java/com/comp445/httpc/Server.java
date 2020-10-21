@@ -95,16 +95,12 @@ public class Server {
         final String valRes = cmdLine.getOptionValue("d");
         if (valRes != null) {
             if (valRes.length() >= 1) {
-                if (valRes.contains("../") || valRes.endsWith("/..")) {
-                    throw new Exception("Invalid data directory");
+                final Path path = Paths.get(cwd, valRes);
+                final File file = new File(path.toString());
+                if (file.exists() && file.isDirectory()) {
+                    this.dataDir = path.toString();
                 } else {
-                    final Path path = Paths.get(cwd, valRes);
-                    final File file = new File(path.toString());
-                    if (file.exists() && file.isDirectory()) {
-                        this.dataDir = path.toString();
-                    } else {
-                        throw new Exception("Invalid data directory");
-                    }
+                    throw new Exception("Invalid data directory");
                 }
             } else {
                 throw new Exception("Invalid data directory");
