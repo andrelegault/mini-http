@@ -2,9 +2,17 @@ package com.comp445.httpc;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.comp445.HttpcResponse;
 
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.PrintWriter;
 
 import org.apache.commons.cli.DefaultParser;
@@ -13,7 +21,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 
 /**
  * This class represents the httpc server.
@@ -37,6 +44,9 @@ public class Server {
     // Contains all parsed arguments
     private CommandLine cmdLine;
 
+    // Current directory of the server.
+    final static String cwd = System.getProperty("user.dir");
+
     // Existence of verbose option
     protected boolean verbose = false;
 
@@ -44,7 +54,7 @@ public class Server {
     public int port = 8080;
 
     // Path to desired endpoint.
-    public String dataDir = "/";
+    public String dataDir = Paths.get(cwd, "/DATA").toString();
 
     // ServerSocket
     private ServerSocket serverSocket;
@@ -85,14 +95,19 @@ public class Server {
         final String valRes = cmdLine.getOptionValue("d");
         if (valRes != null) {
             if (valRes.length() >= 1) {
-                if (valRes.charAt(0) != '/') {
+                if (valRes.contains("../") || valRes.endsWith("/..")) {
                     throw new Exception("Invalid data directory");
-                }
-                if (valRes.length() >= 3 && valRes.substring(0, 3).equalsIgnoreCase("../")) {
-                    throw new Exception("Invalid data directory!");
                 } else {
-                    this.dataDir = valRes;
+                    final Path path = Paths.get(cwd, valRes);
+                    final File file = new File(path.toString());
+                    if (file.exists() && file.isDirectory()) {
+                        this.dataDir = path.toString();
+                    } else {
+                        throw new Exception("Invalid data directory");
+                    }
                 }
+            } else {
+                throw new Exception("Invalid data directory");
             }
         }
     }
