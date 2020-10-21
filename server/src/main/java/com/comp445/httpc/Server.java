@@ -129,34 +129,107 @@ public class Server {
     private void run() {
         try {
             serverSocket = new ServerSocket(this.port);
-            Socket socket = serverSocket.accept();
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            String inputLine, outputLine;
-            String testStatusCode = "200";
-            String testStatusMessage = "OK";
-
-            // TODO: respond with correct status code
-            outputLine = "HTTP/1.0 " + testStatusCode + " " + testStatusMessage;
-            out.write(outputLine);
-
-            while((inputLine = in.readLine()) != null) {
-                if (inputLine.equals("\r\n")) {
-                    break;
-                }
+            log("Server successfully started!");
+            log("Listening on port: " + this.port + " | Data directory: " + dataDir);
+            while (true) {
+                waitForRequest();
             }
-
-            out.close();
-            in.close();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    private void log(final String output) {
+        System.out.println("[localhost:" + this.port + "] => " + output);
+    }
+
+    private void waitForRequest() throws Exception {
+        log("Waiting for request...");
+        final Socket socket = serverSocket.accept();
+        final PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+        String inputLine, outputLine;
+
+        String rawReq = "";
+        while ((inputLine = in.readLine()) != null) {
+            rawReq += inputLine + "\n";
+            if (inputLine.equals("")) {
+                log("Processing request...");
+                break;
+            }
+        }
+
+        final HttpcResponse res = getResponseFromRequest(rawReq);
+        if (verbose) {
+            log("Request Received...");
+            System.out.println(rawReq);
+        }
+
+        final String sent = res.toString();
+
+        out.write(sent);
+
+        if (verbose) {
+            log("Response sent...");
+            System.out.println(sent + "\n");
+        }
+
+        out.close();
+        in.close();
+    }
+
+    private HttpcResponse getResponseFromRequest(final String rawRequest) throws Exception {
+        final String[] lines = rawRequest.split("\n");
+        System.out.println(lines.length);
+        final Matcher matcher = Server.getHeaderMatcher(lines[0]);
+        if (matcher == null) {
+            // request isnt proper format, return with 400
+            return new HttpcResponse(400);
+        } else {
+            final String method = matcher.group(1);
+            final String path = matcher.group(2);
+            if (method.equalsIgnoreCase("GET")) {
+                final Path readPath = Paths.get(dataDir, path);
+                if (!Files.exists(readPath)) {
+                    return new HttpcResponse(404);
+                } else {
+                    return new HttpcResponse(200, Files.readString(readPath));
+                }
+            } else if (method.equalsIgnoreCase("POST")) {
+                final String content = extractBody(lines);
+                writeStringToFile(path, content);
+                return new HttpcResponse(201);
+            } else {
+                return new HttpcResponse(400);
+            }
+        }
+    }
+
+    private String extractBody(final String[] lines) {
+        int bodyLocation = 0;
+        for (int i = 0; i < lines.length; i++) {
+            final String line = lines[i];
+            if (line.equals("")) {
+                bodyLocation = i + 1;
+                break;
+            }
+        }
+        String body = "";
+        for (int k = bodyLocation; k < lines.length; k++) {
+            System.out.println(lines[k]);
+            body += lines[k] + "\n";
+        }
+        return body;
+    }
+
+    private void writeStringToFile(final String path, final String content) throws Exception {
+        final Path file = Paths.get(cwd, path);
+        Files.write(file, content.getBytes());
+    }
+
     public static void main(String[] args) {
         final Server server = new Server(args);
-        System.out.println("Hello World!");
     }
 }
