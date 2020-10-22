@@ -77,6 +77,9 @@ public class Httpfs {
     private void setPort() throws Exception {
         if (cmdLine.hasOption("p")) {
             this.port = Integer.parseInt(cmdLine.getOptionValue("p"));
+            if (port < 1024 || port > 65535) {
+                throw new Exception("port must be within 1024 and 65535");
+            }
         }
     }
 
