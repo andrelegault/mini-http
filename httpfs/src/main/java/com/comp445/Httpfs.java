@@ -126,7 +126,7 @@ public class Httpfs {
         options.addOption(optDataDir);
     }
 
-    private void run() {
+    private void run() throws Exception {
         try {
             serverSocket = new ServerSocket(this.port);
             log("Server successfully started!");
@@ -136,7 +136,7 @@ public class Httpfs {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new Exception(e);
         }
     }
 
