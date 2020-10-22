@@ -111,6 +111,11 @@ public class Httpfs {
     }
 
     private void parse(final String[] args) throws Exception {
+        for (final String s : args) {
+            if (s.equalsIgnoreCase("help")) {
+                throw new Exception("show usage");
+            }
+        }
         cmdLine = parser.parse(options, args);
         setPort();
         setDataDir();
