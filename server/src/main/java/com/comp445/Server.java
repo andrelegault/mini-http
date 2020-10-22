@@ -5,8 +5,12 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.io.PrintWriter;
@@ -24,6 +28,8 @@ import org.apache.commons.cli.Options;
  */
 public class Server {
     // Regex that matches any valid http request header
+    protected static final Pattern headerPattern = Pattern.compile(
+            "([Gg][Ee][Tt]|[Pp][Oo][Ss][Tt]) (\\/(\\w+\\/)*((\\w+\\.\\w+)|\\w+|(?!\\/))) [Hh][Tt][Tt][Pp]\\/1\\.[10]");
     final String[] args;
 
     // Object that parses arguments provided through the CLI
@@ -48,6 +54,7 @@ public class Server {
     public int port = 8080;
 
     // Path to desired endpoint.
+    public Path dataDir = Paths.get(cwd, "/DATA");
 
     // ServerSocket
     private ServerSocket serverSocket;
@@ -89,6 +96,8 @@ public class Server {
         if (valRes != null) {
             if (valRes.length() >= 1) {
                 final Path path = Paths.get(cwd, valRes);
+                if (Files.exists(path) && Files.isDirectory(path)) {
+                    this.dataDir = path;
                 } else {
                     throw new Exception("Invalid data directory");
                 }
@@ -120,6 +129,7 @@ public class Server {
         try {
             serverSocket = new ServerSocket(this.port);
             log("Server successfully started!");
+            log("Listening on port: " + this.port + " | Data directory: " + dataDir.toString());
             while (true) {
                 waitForRequest();
             }
@@ -135,11 +145,17 @@ public class Server {
 
     private void waitForRequest() throws Exception {
         final Socket socket = serverSocket.accept();
+        if (verbose) {
+            log("Request Received... Processing...");
+        }
+
         final PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
         final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
+        final HttpcResponse res = getResponseFromRequest(in);
 
         if (verbose) {
+            log("Request processed...");
         }
 
         final String sent = res.toString();
@@ -155,14 +171,85 @@ public class Server {
         in.close();
     }
 
+    protected static final Map<String, String> extractHeaders(final BufferedReader in) throws Exception {
+        final Map<String, String> headers = new HashMap<String, String>();
+        String inputLine;
+        while ((inputLine = in.readLine()) != null) {
+            if (inputLine.equals("")) {
+                break;
+            } else {
+                final int firstColon = inputLine.indexOf(":");
+                if (firstColon != -1) {
+                    final String key = inputLine.substring(0, firstColon).trim();
+                    final String val = inputLine.substring(firstColon + 1).trim();
+                    headers.put(key, val);
+                } else {
+                    throw new Exception("Header name shouldn't contain a colon!");
+                }
+            }
+        }
+        return headers;
+    }
+
+    private static String extractBody(final BufferedReader in, final int contentLength) throws Exception {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < contentLength; i++) {
+            builder.append((char) in.read());
+        }
+        return builder.toString();
+    }
+
+    private HttpcResponse getResponseFromRequest(final BufferedReader in) throws Exception {
+        final String httpLine = in.readLine();
+        final Matcher matcher = Server.getHeaderMatcher(httpLine);
         if (matcher == null) {
             // request isnt proper format, return with 400
             return new HttpcResponse(400);
         } else {
             final String method = matcher.group(1);
+            final String resource = matcher.group(2);
+            final Map<String, String> headers = extractHeaders(in);
+            final Path path = Paths.get(dataDir.toString(), resource);
             if (method.equalsIgnoreCase("GET")) {
+                if (!Files.exists(path)) {
                     return new HttpcResponse(404);
                 } else {
+                    if (Files.isDirectory(path)) {
+                        final Stream<Path> listOfFiles = Files.list(path);
+                        final StringBuilder container = new StringBuilder();
+                        final Formatter outFmt = new Formatter(container);
+                        outFmt.format("Showing contents of %s%n", resource);
+                        listOfFiles.forEach(tempPath -> {
+                            final String sign = Files.isDirectory(tempPath) ? "d" : "-";
+                            try {
+                                outFmt.format("%s %s: %d%n", sign, tempPath.getFileName(), Files.size(path));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                        listOfFiles.close();
+                        outFmt.close();
+                        return new HttpcResponse(200, container.toString());
+                    } else {
+                        return new HttpcResponse(200, Files.readString(path));
+                    }
+                }
+            } else if (method.equalsIgnoreCase("POST")) {
+                final int contentLength = Integer.parseInt(headers.get("Content-Length"));
+                final String body = extractBody(in, contentLength);
+                if (!Files.exists(path)) {
+                    final Path parentPath = path.getParent();
+                    Files.createDirectories(parentPath);
+                }
+                if (!Files.isDirectory(path)) {
+                    System.out.println(path.toString());
+                    Files.write(path, body.getBytes());
+                }
+                return new HttpcResponse(201);
+            } else {
+                return new HttpcResponse(400);
+            }
+        }
     }
 
     public static void main(String[] args) {

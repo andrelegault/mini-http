@@ -88,13 +88,14 @@ public class HttpcResponse {
      * 
      * @return String representation of this object.
      */
+    @Override
     public String toString() {
         String response = PROTOCOL + "/" + VERSION + " " + this.statusCode + " "
                 + getStatusCodeResponse(this.statusCode);
         response += "\r\nDate: " + getDate();
         response += "\r\nConnection: Close";
         if (body != null) {
-            response += "\r\nContent-Type: text/html";
+            response += "\r\nContent-Type: text/plain";
             response += "\r\nContent-Length: " + body.length();
             response += "\r\n\r\n" + body;
         }
