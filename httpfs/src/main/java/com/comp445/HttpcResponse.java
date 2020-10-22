@@ -2,6 +2,8 @@ package com.comp445;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class represents a response sent by an httpc server. The logic should be
@@ -23,6 +25,11 @@ public class HttpcResponse {
     // Response body.
     public final String body;
 
+    // Request line
+    public final String requestLine;
+
+    public final Map<String, String> headers = new HashMap<String, String>();
+
     /**
      * Constructor.
      * 
@@ -31,6 +38,9 @@ public class HttpcResponse {
     public HttpcResponse(final int statusCode) {
         this.statusCode = statusCode;
         this.body = null;
+
+        this.requestLine = this.getRequestLine();
+        this.setHeaders();
     }
 
     /**
@@ -41,6 +51,9 @@ public class HttpcResponse {
     public HttpcResponse(final int statusCode, final String body) {
         this.statusCode = statusCode;
         this.body = body;
+
+        this.requestLine = this.getRequestLine();
+        this.setHeaders();
     }
 
     /**
@@ -83,6 +96,20 @@ public class HttpcResponse {
         }
     }
 
+    private void setHeaders() {
+        headers.put("Date: ", getDate());
+        headers.put("Connection", "Close");
+        if (body != null) {
+            headers.put("Content-Type", "text/plain");
+            headers.put("Content-Length", Integer.toString(body.length()));
+        }
+    }
+
+    private String getRequestLine() {
+        return HttpcResponse.PROTOCOL + "/" + HttpcResponse.VERSION + " " + this.statusCode + " "
+                + getStatusCodeResponse(this.statusCode);
+    }
+
     /**
      * To represent this object.
      * 
@@ -90,19 +117,19 @@ public class HttpcResponse {
      */
     @Override
     public String toString() {
-        String response = PROTOCOL + "/" + VERSION + " " + this.statusCode + " "
-                + getStatusCodeResponse(this.statusCode);
-        response += "\r\nDate: " + getDate();
-        response += "\r\nConnection: Close";
-        if (body != null) {
-            response += "\r\nContent-Type: text/plain";
-            response += "\r\nContent-Length: " + body.length();
-            response += "\r\n\r\n" + body;
+        final StringBuilder builder = new StringBuilder();
+        builder.append(this.requestLine);
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            builder.append("\r\n" + entry.getKey() + ": " + entry.getValue());
         }
-        return response;
+        if (body != null) {
+            builder.append("\r\n\r\n");
+            builder.append(body);
+        }
+        return builder.toString();
     }
 
     private String getDate() {
-        return dateFormat.format(new Date());
+        return HttpcResponse.dateFormat.format(new Date());
     }
 }
