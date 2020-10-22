@@ -26,7 +26,7 @@ public class HttpcResponse {
     public final String body;
 
     // Request line
-    public final String requestLine;
+    public final String statusLine;
 
     public final Map<String, String> headers = new HashMap<String, String>();
 
@@ -39,7 +39,7 @@ public class HttpcResponse {
         this.statusCode = statusCode;
         this.body = null;
 
-        this.requestLine = this.getRequestLine();
+        this.statusLine = this.getRequestLine();
         this.setHeaders();
     }
 
@@ -52,7 +52,7 @@ public class HttpcResponse {
         this.statusCode = statusCode;
         this.body = body;
 
-        this.requestLine = this.getRequestLine();
+        this.statusLine = this.getRequestLine();
         this.setHeaders();
     }
 
@@ -118,7 +118,7 @@ public class HttpcResponse {
     @Override
     public String toString() {
         final StringBuilder builder = new StringBuilder();
-        builder.append(this.requestLine);
+        builder.append(this.statusLine);
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             builder.append("\r\n" + entry.getKey() + ": " + entry.getValue());
         }
