@@ -1,3 +1,5 @@
+# httpc client
+This repository consists of a CLI to construct HTTP/1.0 requests.
 
 ## Usage
 
