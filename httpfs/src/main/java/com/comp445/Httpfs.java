@@ -243,9 +243,11 @@ public class Httpfs {
                 return new HttpcResponse(403);
             }
         }
-        if (!Files.isDirectory(path)) {
+        if (!Files.isDirectory(path) && Files.isWritable(path)) {
             System.out.println(path.toString());
             Files.write(path, body.getBytes());
+        } else {
+            return new HttpcResponse(403);
         }
         return new HttpcResponse(201);
     }
