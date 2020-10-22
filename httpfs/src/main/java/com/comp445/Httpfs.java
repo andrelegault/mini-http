@@ -199,6 +199,52 @@ public class Httpfs {
         return builder.toString();
     }
 
+    private HttpcResponse processGet(final Path path, final String resource) throws Exception {
+        if (!Files.exists(path)) {
+            return new HttpcResponse(404);
+        } else {
+            if (Files.isDirectory(path)) {
+                final Stream<Path> listOfFiles = Files.list(path);
+                final StringBuilder container = new StringBuilder();
+                final Formatter outFmt = new Formatter(container);
+                outFmt.format("Showing contents of %s%n", resource);
+                listOfFiles.filter(Files::isReadable).forEach(tempPath -> {
+                    final String sign = Files.isDirectory(tempPath) ? "d" : "-";
+                    try {
+                        outFmt.format("%s %s: %d%n", sign, tempPath.getFileName(), Files.size(path));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+                listOfFiles.close();
+                outFmt.close();
+                return new HttpcResponse(200, container.toString());
+            } else {
+                return new HttpcResponse(200, Files.readString(path));
+            }
+        }
+    }
+
+    private HttpcResponse processPost(final Path path, final String body) throws Exception {
+        if (!Files.exists(path)) {
+            final Path parentPath = path.getParent();
+            if (Files.isWritable(parentPath)) {
+                try {
+                    Files.createDirectories(parentPath);
+                } catch (Exception e) {
+                    return new HttpcResponse(500);
+                }
+            } else {
+                return new HttpcResponse(403);
+            }
+        }
+        if (!Files.isDirectory(path)) {
+            System.out.println(path.toString());
+            Files.write(path, body.getBytes());
+        }
+        return new HttpcResponse(201);
+    }
+
     private HttpcResponse getResponseFromRequest(final BufferedReader in) throws Exception {
         final String httpLine = in.readLine();
         final Matcher matcher = Httpfs.getHeaderMatcher(httpLine);
@@ -211,41 +257,11 @@ public class Httpfs {
             final Map<String, String> headers = extractHeaders(in);
             final Path path = Paths.get(dataDir.toString(), resource);
             if (method.equalsIgnoreCase("GET")) {
-                if (!Files.exists(path)) {
-                    return new HttpcResponse(404);
-                } else {
-                    if (Files.isDirectory(path)) {
-                        final Stream<Path> listOfFiles = Files.list(path);
-                        final StringBuilder container = new StringBuilder();
-                        final Formatter outFmt = new Formatter(container);
-                        outFmt.format("Showing contents of %s%n", resource);
-                        listOfFiles.forEach(tempPath -> {
-                            final String sign = Files.isDirectory(tempPath) ? "d" : "-";
-                            try {
-                                outFmt.format("%s %s: %d%n", sign, tempPath.getFileName(), Files.size(path));
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                        listOfFiles.close();
-                        outFmt.close();
-                        return new HttpcResponse(200, container.toString());
-                    } else {
-                        return new HttpcResponse(200, Files.readString(path));
-                    }
-                }
+                return processGet(path, resource);
             } else if (method.equalsIgnoreCase("POST")) {
                 final int contentLength = Integer.parseInt(headers.get("Content-Length"));
                 final String body = extractBody(in, contentLength);
-                if (!Files.exists(path)) {
-                    final Path parentPath = path.getParent();
-                    Files.createDirectories(parentPath);
-                }
-                if (!Files.isDirectory(path)) {
-                    System.out.println(path.toString());
-                    Files.write(path, body.getBytes());
-                }
-                return new HttpcResponse(201);
+                return processPost(path, body);
             } else {
                 return new HttpcResponse(400);
             }
