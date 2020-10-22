@@ -213,28 +213,28 @@ public class Httpfs {
         if (!Files.exists(path)) {
             return new HttpcResponse(404);
         } else {
-            if (Files.isDirectory(path)) {
-                final Stream<Path> listOfFiles = Files.list(path);
-                final StringBuilder container = new StringBuilder();
-                final Formatter outFmt = new Formatter(container);
-                outFmt.format("Showing contents of %s%n", resource);
-                listOfFiles.filter(Files::isReadable).forEach(tempPath -> {
-                    final String sign = Files.isDirectory(tempPath) ? "d" : "-";
-                    try {
-                        outFmt.format("%s %s: %d%n", sign, tempPath.getFileName(), Files.size(path));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                });
-                listOfFiles.close();
-                outFmt.close();
-                return new HttpcResponse(200, container.toString());
-            } else {
-                if (Files.isReadable(path)) {
-                    return new HttpcResponse(200, Files.readString(path));
+            if (Files.isReadable(path)) {
+                if (Files.isDirectory(path)) {
+                    final Stream<Path> listOfFiles = Files.list(path);
+                    final StringBuilder container = new StringBuilder();
+                    final Formatter outFmt = new Formatter(container);
+                    outFmt.format("Showing contents of %s%n", resource);
+                    listOfFiles.filter(Files::isReadable).forEach(tempPath -> {
+                        final String sign = Files.isDirectory(tempPath) ? "d" : "-";
+                        try {
+                            outFmt.format("%s %s: %d%n", sign, tempPath.getFileName(), Files.size(path));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    listOfFiles.close();
+                    outFmt.close();
+                    return new HttpcResponse(200, container.toString());
                 } else {
-                    return new HttpcResponse(403);
+                    return new HttpcResponse(200, Files.readString(path));
                 }
+            } else {
+                return new HttpcResponse(403);
             }
         }
     }
