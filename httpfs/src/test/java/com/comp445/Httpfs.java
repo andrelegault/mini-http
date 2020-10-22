@@ -8,10 +8,10 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit test for simple App.
  */
-public class ServerTest {
+public class Httpfs {
     @Test
     public void testShouldAnswerWithTrue() {
         final String[] args = {"-v", "-p", "8081"};
-        final Server server = new Server(args);
+        final Httpfs server = new Httpfs(args);
     }
 }

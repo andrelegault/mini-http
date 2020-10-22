@@ -26,7 +26,7 @@ import org.apache.commons.cli.Options;
  * This class represents the httpc server.
  *
  */
-public class Server {
+public class Httpfs {
     // Regex that matches any valid http request header
     protected static final Pattern headerPattern = Pattern.compile(
             "([Gg][Ee][Tt]|[Pp][Oo][Ss][Tt]) (\\/(\\w+\\/)*((\\w+\\.\\w+)|\\w+|(?!\\/))) [Hh][Tt][Tt][Pp]\\/1\\.[10]");
@@ -62,7 +62,7 @@ public class Server {
     /**
      * @param args Arguments.
      */
-    public Server(final String[] args) {
+    public Httpfs(final String[] args) {
         this.args = args;
         prepareOptions();
         try {
@@ -201,7 +201,7 @@ public class Server {
 
     private HttpcResponse getResponseFromRequest(final BufferedReader in) throws Exception {
         final String httpLine = in.readLine();
-        final Matcher matcher = Server.getHeaderMatcher(httpLine);
+        final Matcher matcher = Httpfs.getHeaderMatcher(httpLine);
         if (matcher == null) {
             // request isnt proper format, return with 400
             return new HttpcResponse(400);
@@ -253,6 +253,6 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        final Server server = new Server(args);
+        final Httpfs server = new Httpfs(args);
     }
 }

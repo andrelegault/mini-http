@@ -18,7 +18,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-public class Client {
+public class Httpc {
     // General usage instructions
     private final String usageGeneral = "Usage:\n".concat("   httpc command [arguments] URL\n")
             .concat("The commands are:\n").concat("   get     executes a HTTP GET request and prints the response.\n")
@@ -70,7 +70,7 @@ public class Client {
      * @param args Arguments provided through CLI.
      * @throws Exception
      */
-    public Client(final String[] args) {
+    public Httpc(final String[] args) {
         this.args = args;
         try {
             parse();
@@ -268,6 +268,6 @@ public class Client {
     }
 
     public static void main(final String[] args) {
-        new Client(args);
+        new Httpc(args);
     }
 }

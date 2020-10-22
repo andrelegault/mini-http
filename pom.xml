@@ -5,13 +5,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.comp445</groupId>
-  <artifactId>httpc</artifactId>
+  <artifactId>labs</artifactId>
   <version>1.0-SNAPSHOT</version>
 
   <packaging>pom</packaging>
 
-  <name>httpc</name>
-  <url>https://github.com/andrelegault/httpc.git</url>
+  <name>labs</name>
+  <url>https://github.com/andrelegault/mini-http.git</url>
   <description>Assignment for COMP 445 (FALL 2020)</description>
   <inceptionYear>2020</inceptionYear>
 
@@ -25,8 +25,8 @@
   </contributors>
 
   <scm>
-    <connection>scm:git:https://github.com/andrelegault/httpc.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com:andrelegault/httpc.git</developerConnection>
+    <connection>scm:git:https://github.com/andrelegault/mini-http.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com:andrelegault/mini-http.git</developerConnection>
     <url>https://github.com/andrelegault/httpc/tree/${project.scm.tag}</url>
     <tag>master</tag>
   </scm>
@@ -94,7 +94,7 @@
   </build>
 
   <modules>
-    <module>client</module>
-    <module>server</module>
+    <module>httpc</module>
+    <module>httpfs</module>
   </modules>
 </project>
