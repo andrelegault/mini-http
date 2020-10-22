@@ -1,4 +1,4 @@
-package com.comp445.httpc;
+package com.comp445;
 
 import java.net.MalformedURLException;
 import java.util.Map;

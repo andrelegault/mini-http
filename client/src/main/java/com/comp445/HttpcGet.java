@@ -1,4 +1,4 @@
-package com.comp445.httpc;
+package com.comp445;
 
 import java.util.Map;
 import java.net.URL;

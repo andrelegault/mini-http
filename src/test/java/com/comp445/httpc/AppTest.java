@@ -1,13 +1,13 @@
-package com.comp445.httpc;
+package com.comp445;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 /**
  * Unit test for simple App.
  */
-public class ServerTest 
+public class AppTest 
 {
     /**
      * Rigorous Test :-)

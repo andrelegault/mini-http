@@ -4,10 +4,21 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.comp445.httpc</groupId>
+  <parent>
+    <artifactId>httpc</artifactId>
+    <groupId>com.comp445</groupId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>com.comp445</groupId>
   <artifactId>client</artifactId>
   <version>1.0-SNAPSHOT</version>
   
+  <name>client</name>
+  <url>https://github.com/andrelegault/httpc.git</url>
+  <description>Client component for httpc</description>
+  <inceptionYear>2020</inceptionYear>
+
   <contributors>
     <contributor>
       <name>Andre Parsons-Legault</name>
@@ -16,18 +27,6 @@
       <name>Michel Rahme</name>
     </contributor>
   </contributors>
-
-  <name>client</name>
-  <url>https://github.com/andrelegault/httpc/tree/master/client</url>
-  <description>Assignment 1 for COMP 445 (FALL 2020)</description>
-  <inceptionYear>2020</inceptionYear>
-
-  <scm>
-    <connection>scm:git:https://github.com/andrelegault/httpc.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com:andrelegault/httpc.git</developerConnection>
-    <url>https://github.com/andrelegault/httpc/tree/${project.scm.tag}</url>
-    <tag>master</tag>
-  </scm>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -83,7 +82,7 @@
           <configuration>
             <archive>
               <manifest>
-                <mainClass>com.comp445.httpc.Client</mainClass>
+                <mainClass>com.comp445.Client</mainClass>
               </manifest>
             </archive>
             <descriptorRefs>

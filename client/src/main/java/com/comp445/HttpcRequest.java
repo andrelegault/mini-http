@@ -1,4 +1,4 @@
-package com.comp445.httpc;
+package com.comp445;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -52,7 +52,7 @@ public abstract class HttpcRequest {
         }
     }
 
-    protected String connect() throws IOException {
+    protected final String connect() throws IOException {
         final int port = url.getPort();
         socket = new Socket(url.getHost(), port != -1 ? port : DEFAULT_PORT);
         out = new PrintWriter(socket.getOutputStream(), true);

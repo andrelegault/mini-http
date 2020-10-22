@@ -1,4 +1,4 @@
-package com.comp445.httpc;
+package com.comp445;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
