@@ -14,7 +14,6 @@ import java.util.stream.Stream;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.io.PrintWriter;
-import java.io.IOException;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -120,7 +119,7 @@ public class Httpfs {
         final Option optPort = Option.builder("p").argName("port").required(false).hasArg(true)
                 .desc("Specifies the port number that the server will listen and serve at. Default is 8080.").build();
         final Option optDataDir = Option.builder("d").argName("Data directory").required(false).hasArg(true)
-                .desc("Specifies the port number that the server will listen and serve at. Default is 8080.").build();
+                .desc("Specifies the data directory used for serving files. Every request will be relative to that directory. Default is DATA.").build();
         options.addOption(optVerbose);
         options.addOption(optPort);
         options.addOption(optDataDir);
