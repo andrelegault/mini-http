@@ -42,3 +42,5 @@ buildNumber.properties
 .classpath
 
 instructions*.pdf
+
+DATA/
