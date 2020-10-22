@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.PrintWriter;
+import java.io.IOException;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -29,7 +30,7 @@ import org.apache.commons.cli.Options;
 public class Server {
     // Regex that matches any valid http request header
     protected static final Pattern headerPattern = Pattern
-            .compile("([Gg][Ee][Tt]|[Pp][Oo][Ss][Tt]) (\\/(\\w+\\/)*((\\w+\\.\\w+)|\\w+)) [Hh][Tt][Tt][Pp]\\/1\\.[10]");
+            .compile("([Gg][Ee][Tt]|[Pp][Oo][Ss][Tt]) (\\/(\\w+\\/)*((\\w+\\.\\w+)|\\w+|(?!\\/))) [Hh][Tt][Tt][Pp]\\/1\\.[10]");
     final String[] args;
 
     // Object that parses arguments provided through the CLI
@@ -182,7 +183,6 @@ public class Server {
 
     private HttpcResponse getResponseFromRequest(final String rawRequest) throws Exception {
         final String[] lines = rawRequest.split("\n");
-        System.out.println(lines.length);
         final Matcher matcher = Server.getHeaderMatcher(lines[0]);
         if (matcher == null) {
             // request isnt proper format, return with 400
@@ -193,9 +193,30 @@ public class Server {
             if (method.equalsIgnoreCase("GET")) {
                 final Path readPath = Paths.get(dataDir, path);
                 if (!Files.exists(readPath)) {
-                    return new HttpcResponse(404);
-                } else {
-                    return new HttpcResponse(200, Files.readString(readPath));
+                    return new HttpcResponse(400);
+                }else{
+                    File folder = new File(readPath.toString());
+                    if(folder.isDirectory()) {
+                        File[] listOfFiles = folder.listFiles();
+                        StringBuilder files = new StringBuilder();
+                        if(listOfFiles.length == 0){
+                            files.append("Directory Empty\n");
+                        }else{
+                        files.append("The Files in Directory " + path + " are:\n\n");
+                        for (int i = 0; i < listOfFiles.length; i++) {
+                            if (listOfFiles[i].isFile()) {
+                                files.append("File: " + listOfFiles[i].getName());
+                                files.append("\n");
+                            } else if (listOfFiles[i].isDirectory()) {
+                                files.append("Directory: " + listOfFiles[i].getName());
+                                files.append("\n");
+                                }
+                            }
+                        }
+                        return new HttpcResponse(200, files.toString());
+                    }else {
+                        return new HttpcResponse(200, Files.readString(readPath));
+                    }
                 }
             } else if (method.equalsIgnoreCase("POST")) {
                 final String content = extractBody(lines);
@@ -225,8 +246,21 @@ public class Server {
     }
 
     private void writeStringToFile(final String path, final String content) throws Exception {
-        final Path file = Paths.get(cwd, path);
-        Files.write(file, content.getBytes());
+        File file = new File(Paths.get(dataDir, path).toString());
+        if(file.isFile()){
+            final Path filePath = Paths.get(dataDir, path);
+            Files.write(filePath, content.getBytes());
+        }
+        else if(!file.exists()){
+            final Path parentPath = Paths.get(file.getAbsoluteFile().getParent());
+            try {
+                Files.createDirectories(parentPath);
+                final Path filePath = Paths.get(parentPath.toString(), file.getName());
+                Files.write(filePath, content.getBytes());
+            }catch (IOException e){
+                System.out.println(e);
+            }
+        }
     }
 
     public static void main(String[] args) {
