@@ -119,10 +119,11 @@ public class Httpfs {
     private void prepareOptions() {
         final Option optVerbose = Option.builder("v").argName("verbose").required(false).hasArg(false)
                 .desc("Prints debugging messages.").build();
-        final Option optPort = Option.builder("p").argName("port").required(false).hasArg(true)
-                .desc("Specifies the port number that the server will listen and serve at. Default is 8080.").build();
+        final Option optPort = Option.builder("p").argName("port").required(false).hasArg(true).desc(
+                "Specifies the port number that the server will listen and serve at. Values should be between 1024 and 65535. Default is 8080.")
+                .build();
         final Option optDataDir = Option.builder("d").argName("Data directory").required(false).hasArg(true).desc(
-                "Specifies the data directory used for serving files. Every request will be relative to that directory. Default is DATA.")
+                "Specifies the data directory used for serving files. Provided path is relative to the current directory and must exist. Default is DATA.")
                 .build();
         options.addOption(optVerbose);
         options.addOption(optPort);
