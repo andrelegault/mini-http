@@ -221,7 +221,11 @@ public class Httpfs {
                 outFmt.close();
                 return new HttpcResponse(200, container.toString());
             } else {
-                return new HttpcResponse(200, Files.readString(path));
+                if (Files.isReadable(path)) {
+                    return new HttpcResponse(200, Files.readString(path));
+                } else {
+                    return new HttpcResponse(403);
+                }
             }
         }
     }
