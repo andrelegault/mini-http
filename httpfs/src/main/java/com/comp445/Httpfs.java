@@ -118,8 +118,9 @@ public class Httpfs {
                 .desc("Prints debugging messages.").build();
         final Option optPort = Option.builder("p").argName("port").required(false).hasArg(true)
                 .desc("Specifies the port number that the server will listen and serve at. Default is 8080.").build();
-        final Option optDataDir = Option.builder("d").argName("Data directory").required(false).hasArg(true)
-                .desc("Specifies the data directory used for serving files. Every request will be relative to that directory. Default is DATA.").build();
+        final Option optDataDir = Option.builder("d").argName("Data directory").required(false).hasArg(true).desc(
+                "Specifies the data directory used for serving files. Every request will be relative to that directory. Default is DATA.")
+                .build();
         options.addOption(optVerbose);
         options.addOption(optPort);
         options.addOption(optDataDir);
@@ -146,7 +147,7 @@ public class Httpfs {
     private void waitForRequest() throws Exception {
         final Socket socket = serverSocket.accept();
         if (verbose) {
-            log("Request Received... Processing...");
+            log("Request received from " + socket.getInetAddress());
         }
 
         final PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
@@ -155,7 +156,7 @@ public class Httpfs {
         final HttpcResponse res = getResponseFromRequest(in);
 
         if (verbose) {
-            log("Request processed...");
+            log("Request processed!");
         }
 
         final String sent = res.toString();
@@ -163,7 +164,7 @@ public class Httpfs {
         out.write(sent);
 
         if (verbose) {
-            log("Response sent...");
+            log("Response sent to " + socket.getInetAddress());
             System.out.println(sent + "\n");
         }
 
