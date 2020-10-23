@@ -245,25 +245,30 @@ public class Httpfs {
     }
 
     private HttpcResponse processPost(final Path path, final String body) throws Exception {
-        if (!Files.exists(path)) {
-            final Path parentPath = path.getParent();
-            if (Files.isWritable(parentPath)) {
-                try {
-                    Files.createDirectories(parentPath);
-                } catch (Exception e) {
-                    return new HttpcResponse(500);
-                }
+        if (!Files.isDirectory(path)) {
+            // its a file or doesn't exist
+            if (Files.exists(path) && Files.isWritable(path)) {
+                // is a writable file
+                Files.write(path, body.getBytes());
+                return new HttpcResponse(201);
             } else {
-                return new HttpcResponse(403);
+                if (!Files.exists(path)) {
+                    // doesnt exist or is not writable
+                    final Path parentPath = path.getParent();
+                    try {
+                        Files.createDirectories(parentPath);
+                        Files.write(path, body.getBytes());
+                        return new HttpcResponse(201);
+                    } catch (Exception e) {
+                        return new HttpcResponse(403);
+                    }
+                } else {
+                    return new HttpcResponse(403);
+                }
             }
-        }
-        if (!Files.isDirectory(path) && Files.isWritable(path)) {
-            System.out.println(path.toString());
-            Files.write(path, body.getBytes());
         } else {
             return new HttpcResponse(403);
         }
-        return new HttpcResponse(201);
     }
 
     private HttpcResponse getResponseFromRequest(final BufferedReader in) throws Exception {
