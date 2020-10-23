@@ -14,11 +14,11 @@ The commands are:
 Use "http help [command]" for more information about a command.
 ```
 
-Performing a GET request to http://www.google.com/: `java httpc-1.0.jar get -v http://www.google.com/`
+Performing a GET request to http://www.google.com/: `java -jar <path-to-jar> get -v http://www.google.com/`
 
-Performing a POST request to google.com: `java -jar httpc-1.0.jar post -d '{"Assignment": 1}' -h test:value http://www.google.com/`
+Performing a POST request to google.com: `java -jar <path-to-jar> post -d '{"Assignment": 1}' -h test:value http://www.google.com/`
 
-Run `java -jar httpc-1.0.jar help` for help.
+Run `java -jar <path-to-jar> help` for help.
 
 ## Testing httpc
 
@@ -28,4 +28,6 @@ Run `mvn test`
 
 Run `mvn clean compile assembly:single`.
 
-This will produce a `.jar` file that can be run alongside any argument desired.
+This will produce a `.jar` file that can be run alongside any argument
+
+The jar will be, by default, under `target/httpc-1.0-SNAPSHOT-jar-with-dependencies.jar`.

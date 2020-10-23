@@ -32,4 +32,6 @@ Run `mvn test`
 
 Run `mvn clean compile assembly:single`.
 
-This will produce a `.jar` file that can be run alongside any argument desired.
+This will produce a `.jar` file that can be run alongside any argument
+
+The jar will be, by default, under `target/httpfs-1.0-SNAPSHOT-jar-with-dependencies.jar`.
