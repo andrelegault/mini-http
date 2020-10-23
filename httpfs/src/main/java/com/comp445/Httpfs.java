@@ -174,8 +174,14 @@ public class Httpfs {
         }
 
         final String sent = res.toString();
+        final byte[] bytes = res.body;
 
         out.write(sent);
+        if (bytes != null) {
+            for (final byte b : bytes) {
+                out.write(b);
+            }
+        }
 
         if (verbose) {
             log("Response sent to " + socket.getInetAddress());
@@ -234,9 +240,11 @@ public class Httpfs {
                     });
                     listOfFiles.close();
                     outFmt.close();
-                    return new HttpcResponse(200, container.toString());
+                    return new HttpcResponse(200, path, container.toString().getBytes());
+                    // return new HttpcResponse(200, path, container.toString());
                 } else {
-                    return new HttpcResponse(200, Files.readString(path));
+                    return new HttpcResponse(200, path, Files.readAllBytes(path));
+                    // return new HttpcResponse(200, path, Files.readString(path));
                 }
             } else {
                 return new HttpcResponse(403);
