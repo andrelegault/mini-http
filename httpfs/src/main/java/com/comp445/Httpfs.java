@@ -119,6 +119,11 @@ public class Httpfs {
         cmdLine = parser.parse(options, args);
         setPort();
         setDataDir();
+        setVerbose();
+    }
+
+    private void setVerbose() {
+        this.verbose = cmdLine.hasOption("v");
     }
 
     private void prepareOptions() {
