@@ -1,6 +1,10 @@
 package com.comp445;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,13 +21,17 @@ public class HttpcResponse {
     // Protocol supported by this response.
     private static final String PROTOCOL = "HTTP";
 
+    private static final String[] inlineExts = { "jpg", "png", "html", "htm", "txt" };
+
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss z");
 
     // Status code of this response.
     private final int statusCode;
 
+    private final Path path;
+
     // Response body.
-    public final String body;
+    public final byte[] body;
 
     // Request line
     public final String statusLine;
@@ -34,10 +42,12 @@ public class HttpcResponse {
      * Constructor.
      * 
      * @param statusCode Status code for the response.
+     * @throws IOException
      */
-    public HttpcResponse(final int statusCode) {
+    public HttpcResponse(final int statusCode) throws IOException {
         this.statusCode = statusCode;
         this.body = null;
+        this.path = null;
 
         this.statusLine = this.getRequestLine();
         this.setHeaders();
@@ -47,10 +57,12 @@ public class HttpcResponse {
      * Constructor.
      * 
      * @param statusCode Status code for the response.
+     * @throws IOException
      */
-    public HttpcResponse(final int statusCode, final String body) {
+    public HttpcResponse(final int statusCode, final Path path, final byte[] body) throws IOException {
         this.statusCode = statusCode;
         this.body = body;
+        this.path = path;
 
         this.statusLine = this.getRequestLine();
         this.setHeaders();
@@ -96,13 +108,34 @@ public class HttpcResponse {
         }
     }
 
-    private void setHeaders() {
+    private void setHeaders() throws IOException {
         headers.put("Date: ", getDate());
         headers.put("Connection", "Close");
         if (body != null) {
-            headers.put("Content-Type", "text/plain");
-            headers.put("Content-Length", Integer.toString(body.length()));
+            final String predictedContentType = predictContentType();
+            final String predictedContentDisPosition = predictContentDisposition();
+            headers.put("Content-Type", predictedContentType == null ? "text/plain" : predictedContentType);
+            headers.put("Content-Disposition", predictedContentDisPosition);
+            headers.put("Content-Length", Integer.toString(body.length));
         }
+    }
+
+    private String predictContentDisposition() {
+        final String ext = extractExtension(this.path.toString());
+        // try to display these filetypes
+        final boolean isInline = ext == null || Arrays.stream(HttpcResponse.inlineExts).anyMatch(ext::equals);
+        return isInline ? "inline" : "attachment";
+    }
+
+    private String extractExtension(String string) {
+        final int lastIndexOfDot = string.lastIndexOf(".");
+        string = lastIndexOfDot == -1 || lastIndexOfDot == (string.length() - 1) ? null
+                : string.substring(lastIndexOfDot + 1);
+        return string;
+    }
+
+    private String predictContentType() throws IOException {
+        return Files.probeContentType(this.path);
     }
 
     private String getRequestLine() {
@@ -122,10 +155,7 @@ public class HttpcResponse {
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             builder.append("\r\n" + entry.getKey() + ": " + entry.getValue());
         }
-        if (body != null) {
-            builder.append("\r\n\r\n");
-            builder.append(body);
-        }
+        builder.append("\r\n\r\n");
         return builder.toString();
     }
 

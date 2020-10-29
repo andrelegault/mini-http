@@ -12,8 +12,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.BufferedReader;
-import java.io.PrintWriter;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -146,7 +146,7 @@ public class Httpfs {
             log("Server successfully started!");
             log("Listening on port: " + this.port + " | Data directory: " + dataDir.toString());
             while (true) {
-                waitForRequest();
+                processRequest();
             }
 
         } catch (Exception e) {
@@ -158,13 +158,13 @@ public class Httpfs {
         System.out.println("[localhost:" + this.port + "] => " + output);
     }
 
-    private void waitForRequest() throws Exception {
+    private void processRequest() throws Exception {
         final Socket socket = serverSocket.accept();
         if (verbose) {
             log("Request received from " + socket.getInetAddress());
         }
 
-        final PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        final OutputStream out = socket.getOutputStream();
         final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
         final HttpcResponse res = getResponseFromRequest(in);
@@ -174,8 +174,14 @@ public class Httpfs {
         }
 
         final String sent = res.toString();
+        final byte[] bytes = res.body;
 
-        out.write(sent);
+        out.write(sent.getBytes());
+        if (bytes != null) {
+            for (final byte b : bytes) {
+                out.write((char) (b & 0xFF));
+            }
+        }
 
         if (verbose) {
             log("Response sent to " + socket.getInetAddress());
@@ -234,9 +240,9 @@ public class Httpfs {
                     });
                     listOfFiles.close();
                     outFmt.close();
-                    return new HttpcResponse(200, container.toString());
+                    return new HttpcResponse(200, path, container.toString().getBytes());
                 } else {
-                    return new HttpcResponse(200, Files.readString(path));
+                    return new HttpcResponse(200, path, Files.readAllBytes(path));
                 }
             } else {
                 return new HttpcResponse(403);
