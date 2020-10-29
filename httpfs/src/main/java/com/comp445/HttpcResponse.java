@@ -1,7 +1,6 @@
 package com.comp445;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -156,11 +155,7 @@ public class HttpcResponse {
         for (Map.Entry<String, String> entry : headers.entrySet()) {
             builder.append("\r\n" + entry.getKey() + ": " + entry.getValue());
         }
-        if (body != null) {
-            builder.append("\r\n\r\n");
-            // builder.append(new String(body, StandardCharsets.UTF_8));
-            // builder.append(body);
-        }
+        builder.append("\r\n\r\n");
         return builder.toString();
     }
 

@@ -12,8 +12,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.BufferedReader;
-import java.io.PrintWriter;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -164,7 +164,7 @@ public class Httpfs {
             log("Request received from " + socket.getInetAddress());
         }
 
-        final PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+        final OutputStream out = socket.getOutputStream();
         final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
         final HttpcResponse res = getResponseFromRequest(in);
@@ -176,10 +176,10 @@ public class Httpfs {
         final String sent = res.toString();
         final byte[] bytes = res.body;
 
-        out.write(sent);
+        out.write(sent.getBytes());
         if (bytes != null) {
             for (final byte b : bytes) {
-                out.write(b);
+                out.write((char) (b & 0xFF));
             }
         }
 
@@ -241,10 +241,8 @@ public class Httpfs {
                     listOfFiles.close();
                     outFmt.close();
                     return new HttpcResponse(200, path, container.toString().getBytes());
-                    // return new HttpcResponse(200, path, container.toString());
                 } else {
                     return new HttpcResponse(200, path, Files.readAllBytes(path));
-                    // return new HttpcResponse(200, path, Files.readString(path));
                 }
             } else {
                 return new HttpcResponse(403);
