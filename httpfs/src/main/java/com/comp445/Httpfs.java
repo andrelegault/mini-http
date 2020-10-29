@@ -146,7 +146,7 @@ public class Httpfs {
             log("Server successfully started!");
             log("Listening on port: " + this.port + " | Data directory: " + dataDir.toString());
             while (true) {
-                waitForRequest();
+                processRequest();
             }
 
         } catch (Exception e) {
@@ -158,7 +158,7 @@ public class Httpfs {
         System.out.println("[localhost:" + this.port + "] => " + output);
     }
 
-    private void waitForRequest() throws Exception {
+    private void processRequest() throws Exception {
         final Socket socket = serverSocket.accept();
         if (verbose) {
             log("Request received from " + socket.getInetAddress());
