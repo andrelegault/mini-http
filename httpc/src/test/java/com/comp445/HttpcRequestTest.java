@@ -1,6 +1,5 @@
 package com.comp445;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -19,7 +18,7 @@ public class HttpcRequestTest {
     final Map<String, String> validHeaders = new HashMap<String, String>();
     final Map<String, String> emptyHeaders = new HashMap<String, String>();
 
-    String dataFromFile;
+    byte[] dataFromFile;
     URL get;
     URL getPort;
     URL getQuery;
@@ -34,7 +33,7 @@ public class HttpcRequestTest {
     @BeforeAll
     public void testBeforeAll() {
         try {
-            dataFromFile = Files.readString(Path.of("inputFile.txt"));
+            dataFromFile = Files.readAllBytes(Path.of("inputFile.txt"));
             get = new URL("http://httpbin.org/get");
             getPort = new URL("http://httpbin.org:80/get");
             getQuery = new URL("http://httpbin.org/get?course=networking&assignment=1");
@@ -43,7 +42,7 @@ public class HttpcRequestTest {
             postPort = new URL("http://httpbin.org:80/post");
             postQuery = new URL("http://httpbin.org/post?course=networking&assignment=1");
             postPortQuery = new URL("http://httpbin.org:80/post?course=networking&assignment=1");
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         invalidHeaders.put("key1", "");
@@ -53,112 +52,112 @@ public class HttpcRequestTest {
     }
 
     @Test
-    public void testHttpcRequestGet() throws IOException {
+    public void testHttpcRequestGet() throws Exception {
         final HttpcGet testGet = new HttpcGet(get, null, verbose, null);
         final String res = testGet.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcRequestGetPort() throws IOException {
+    public void testHttpcRequestGetPort() throws Exception {
         final HttpcGet testGet = new HttpcGet(getPort, null, verbose, null);
         final String res = testGet.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcRequestGetQuery() throws IOException {
+    public void testHttpcRequestGetQuery() throws Exception {
         final HttpcGet testGet = new HttpcGet(getPort, null, verbose, null);
         final String res = testGet.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcRequestGetPortQuery() throws IOException {
+    public void testHttpcRequestGetPortQuery() throws Exception {
         final HttpcGet testGet = new HttpcGet(getPortQuery, null, verbose, null);
         final String res = testGet.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcRequestPost() throws IOException {
+    public void testHttpcRequestPost() throws Exception {
         final HttpcPost testPost = new HttpcPost(post, null, null, verbose, null);
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcRequestPostPort() throws IOException {
+    public void testHttpcRequestPostPort() throws Exception {
         final HttpcPost testPost = new HttpcPost(postPort, null, null, verbose, null);
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcRequestPostQuery() throws IOException {
+    public void testHttpcRequestPostQuery() throws Exception {
         final HttpcPost testPost = new HttpcPost(postPort, null, null, verbose, null);
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcRequestPostPortQuery() throws IOException {
+    public void testHttpcRequestPostPortQuery() throws Exception {
         final HttpcPost testPost = new HttpcPost(postPortQuery, null, null, verbose, null);
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcRequestGetWithNoSlash() throws IOException {
+    public void testHttpcRequestGetWithNoSlash() throws Exception {
         final HttpcGet testGet = new HttpcGet(new URL("https://www.google.com"), null, verbose, null);
         final String res = testGet.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcGetEmptyHeaders() throws IOException {
+    public void testHttpcGetEmptyHeaders() throws Exception {
         final HttpcGet testGet = new HttpcGet(get, emptyHeaders, verbose, null);
         final String res = testGet.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcGetValidHeaders() throws IOException {
+    public void testHttpcGetValidHeaders() throws Exception {
         final HttpcGet testGet = new HttpcGet(get, validHeaders, verbose, null);
         final String res = testGet.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testPost() throws IOException {
+    public void testPost() throws Exception {
         final HttpcPost testPost = new HttpcPost(post, null, null, verbose, null);
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testPostWithData() throws IOException {
+    public void testPostWithData() throws Exception {
         final HttpcPost testPost = new HttpcPost(post, null, dataFromFile, verbose, "outputFile.txt");
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testPostWithDataString() throws IOException {
-        final HttpcPost testPost = new HttpcPost(post, null, validDataString, verbose, "outputFile.txt");
+    public void testPostWithDataString() throws Exception {
+        final HttpcPost testPost = new HttpcPost(post, null, validDataString.getBytes(), verbose, "outputFile.txt");
         final String res = testPost.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcRedirect() throws IOException {
+    public void testHttpcRedirect() throws Exception {
         final HttpcGet testRedirect = new HttpcGet(new URL("https://www.google.com"), null, verbose, null);
         final String res = testRedirect.connect();
         assert (res.contains("200 OK"));
     }
 
     @Test
-    public void testHttpcRedirectOutputToFile() throws IOException {
+    public void testHttpcRedirectOutputToFile() throws Exception {
         final HttpcGet testRedirect = new HttpcGet(new URL("https://www.google.com"), null, verbose, "outputFile.txt");
         final String res = testRedirect.connect();
         assert (res.contains("200 OK"));
