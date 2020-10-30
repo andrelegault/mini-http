@@ -53,7 +53,7 @@ public class Httpc {
     protected Map<String, String> headers = new HashMap<String, String>();
 
     // Request data
-    protected String data;
+    protected byte[] data;
 
     // Request action
     protected String action;
@@ -155,7 +155,7 @@ public class Httpc {
      */
     private void setData() throws IOException {
         if (cmdLine.hasOption("d")) {
-            this.data = cmdLine.getOptionValue("d");
+            this.data = cmdLine.getOptionValue("d").getBytes();
         } else if (cmdLine.hasOption("f")) {
             this.data = loadFileContents(Path.of(cmdLine.getOptionValue("f")));
         }
@@ -167,8 +167,8 @@ public class Httpc {
      * @return String Contents of the file.
      * @throws IOException
      */
-    private String loadFileContents(Path filePath) throws IOException {
-        return Files.readString(filePath);
+    private byte[] loadFileContents(Path filePath) throws IOException {
+        return Files.readAllBytes(filePath);
     }
 
     /**
@@ -256,7 +256,7 @@ public class Httpc {
         }
     }
 
-    private void run() throws IOException {
+    private void run() throws Exception {
         if (this.action.equalsIgnoreCase("get")) {
             this.req = new HttpcGet(this.target, this.headers, this.verbose, this.outputFilename);
         } else if (this.action.equalsIgnoreCase("post")) {

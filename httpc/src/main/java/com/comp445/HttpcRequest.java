@@ -1,11 +1,10 @@
 package com.comp445;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.URL;
 import java.util.Formatter;
@@ -18,11 +17,13 @@ public abstract class HttpcRequest {
      * 
      * Methods implemented follow https://tools.ietf.org/html/rfc7230#section-3.2
      */
-    protected PrintWriter out;
+    protected OutputStream out;
     private URL url;
     private Map<String, String> headers;
     private Socket socket;
-    private BufferedReader in;
+    private InputStream in;
+    // private BufferedReader in;
+    protected byte[] data;
     private final boolean verbose;
     private final String outputFilename;
     private static final int DEFAULT_PORT = 80;
@@ -31,14 +32,13 @@ public abstract class HttpcRequest {
     protected Formatter outFmt;
 
     protected HttpcRequest(final URL target, final Map<String, String> headers, final boolean verbose,
-            final String outputFilename) {
+            final String outputFilename, final byte[] data) {
         this.url = target;
         this.headers = headers;
         this.verbose = verbose;
         this.outputFilename = outputFilename;
+        this.data = data;
     }
-
-    protected abstract void setDataHeaders();
 
     protected abstract String getMethod();
 
@@ -52,29 +52,35 @@ public abstract class HttpcRequest {
         }
     }
 
-    protected final String connect() throws IOException {
+    protected final String connect() throws Exception {
         final int port = url.getPort();
         socket = new Socket(url.getHost(), port != -1 ? port : DEFAULT_PORT);
-        out = new PrintWriter(socket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        out = socket.getOutputStream();
+        in = socket.getInputStream();
         verboseContainer = new StringBuilder();
         outFmt = new Formatter(verboseContainer);
 
         setRequestHeaders();
-        setDataHeaders();
-        outFmt.format("\r%n");
+        if (this instanceof HttpcPost) {
+            outFmt.format("Content-Length: %d\r%n", data == null ? 0 : data.length);
+            outFmt.format("Content-Type: text/plain\r%n");
+        }
 
         final String sent = verboseContainer.toString();
-        out.println(sent);
+        out.write(sent.getBytes());
+        out.write("\r\n".getBytes());
+        if (data != null) {
+            for (int i = 0; i < data.length; i++) {
+                out.write((char) (data[i] & 0xFF));
+            }
+        }
 
         final String received = readData();
         close();
 
         if (verbose) {
-            System.out.println();
             System.out.println(sent);
             System.out.println(received);
-            System.out.println();
         }
 
         if (received.contains("HTTP/1.0 30") || received.contains("HTTP/1.1 30")) {
