@@ -91,7 +91,7 @@ public class Httpfs {
     private void parse(final String[] args) throws Exception {
         for (final String s : args) {
             if (s.equalsIgnoreCase("help")) {
-                throw new Exception("show usage");
+                throw new Exception();
             }
         }
         cmdLine = parser.parse(options, args);

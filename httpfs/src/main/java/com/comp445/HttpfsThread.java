@@ -1,7 +1,6 @@
 package com.comp445;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -20,6 +19,7 @@ public class HttpfsThread implements Runnable {
     private final boolean verbose;
     private final Socket socket;
     private final Path dataDir;
+    private final static int NEWLINE = 0x0A;
 
     public HttpfsThread(final Socket socket, final boolean verbose, final Path dataDir) {
         this.socket = socket;
@@ -31,11 +31,11 @@ public class HttpfsThread implements Runnable {
         System.out.println("[thread " + Thread.currentThread().getId() + "] => " + output);
     }
 
-    protected Map<String, String> extractHeaders(final BufferedReader in) throws Exception {
+    protected Map<String, String> extractHeaders(final InputStream in) throws Exception {
         final Map<String, String> headers = new HashMap<String, String>();
         String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            if (inputLine.equals("")) {
+        while ((inputLine = readLine(in)) != null) {
+            if (inputLine.equals("\r")) {
                 break;
             } else {
                 final int firstColon = inputLine.indexOf(":");
@@ -62,12 +62,25 @@ public class HttpfsThread implements Runnable {
         return matcher.find() ? matcher : null;
     }
 
-    protected String extractBody(final BufferedReader in, final int contentLength) throws Exception {
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < contentLength; i++) {
-            builder.append((char) in.read());
+    protected static String readLine(final InputStream inputStream) throws Exception {
+        int c;
+        String s = "";
+        while ((c = inputStream.read()) != -1) {
+            if (c == NEWLINE) {
+                break;
+            } else {
+                s += (char) c + "";
+            }
         }
-        return builder.toString();
+        return s;
+    }
+
+    protected byte[] extractBody(final InputStream in, final int contentLength) throws Exception {
+        final byte[] bytes = new byte[contentLength];
+        for (int i = 0; i < contentLength; i++) {
+            bytes[i] = (byte) in.read();
+        }
+        return bytes;
     }
 
     private void processRequest() throws Exception {
@@ -76,7 +89,7 @@ public class HttpfsThread implements Runnable {
         }
 
         final OutputStream out = socket.getOutputStream();
-        final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        final InputStream in = socket.getInputStream();
 
         final HttpcResponse res = getResponseFromRequest(in);
 
@@ -85,6 +98,7 @@ public class HttpfsThread implements Runnable {
         }
 
         final String sent = res.toString();
+        System.out.println(res.toString());
         final byte[] bytes = res.body;
 
         out.write(sent.getBytes());
@@ -103,8 +117,8 @@ public class HttpfsThread implements Runnable {
         in.close();
     }
 
-    private HttpcResponse getResponseFromRequest(final BufferedReader in) throws Exception {
-        final String httpLine = in.readLine();
+    private HttpcResponse getResponseFromRequest(final InputStream in) throws Exception {
+        final String httpLine = readLine(in);
         final Matcher matcher = HttpfsThread.getHeaderMatcher(httpLine);
         if (matcher == null) {
             // request isnt proper format, return with 400
@@ -117,9 +131,13 @@ public class HttpfsThread implements Runnable {
             if (method.equalsIgnoreCase("GET")) {
                 return processGet(path, resource);
             } else if (method.equalsIgnoreCase("POST")) {
-                final int contentLength = Integer.parseInt(headers.get("Content-Length"));
-                final String body = extractBody(in, contentLength);
-                return processPost(path, body);
+                try {
+                    final int contentLength = Integer.parseInt(headers.get("Content-Length"));
+                    final byte[] body = extractBody(in, contentLength);
+                    return processPost(path, body);
+                } catch (Exception e) {
+                    return new HttpcResponse(400);
+                }
             } else {
                 return new HttpcResponse(400);
             }
@@ -156,13 +174,13 @@ public class HttpfsThread implements Runnable {
         }
     }
 
-    private HttpcResponse processPost(final Path path, final String body) throws Exception {
+    private HttpcResponse processPost(final Path path, final byte[] body) throws Exception {
         // TODO: use synchronization to prevent deadlocks and livelocks
         if (!Files.isDirectory(path)) {
             // its a file or doesn't exist
             if (Files.exists(path) && Files.isWritable(path)) {
                 // is a writable file
-                Files.write(path, body.getBytes());
+                Files.write(path, body);
                 return new HttpcResponse(201);
             } else {
                 if (!Files.exists(path)) {
@@ -170,7 +188,7 @@ public class HttpfsThread implements Runnable {
                     final Path parentPath = path.getParent();
                     try {
                         Files.createDirectories(parentPath);
-                        Files.write(path, body.getBytes());
+                        Files.write(path, body);
                         return new HttpcResponse(201);
                     } catch (Exception e) {
                         return new HttpcResponse(403);
@@ -189,7 +207,6 @@ public class HttpfsThread implements Runnable {
         try {
             processRequest();
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
