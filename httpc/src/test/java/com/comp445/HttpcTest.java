@@ -137,7 +137,7 @@ public class HttpcTest {
         final String[] args = { "post", "-v", "-f", "inputFile.txt",
                 "http://httpbin.org/post?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
-        assertEquals("1234test\n", test.data);
+        assertEquals("1234test\n".getBytes(), test.data);
     }
 
     @Test
@@ -145,7 +145,7 @@ public class HttpcTest {
         final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'",
                 "http://httpbin.org/post?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
-        assertEquals("'{ \"Assignment\": 1 }'", test.data);
+        assertEquals("'{ \"Assignment\": 1 }'".getBytes(), test.data);
     }
 
     @Test
@@ -161,7 +161,7 @@ public class HttpcTest {
         final String[] args = { "post", "-v", "-d", "'{ \"Assignment\": 1 }'", "-o", "outputFile.txt",
                 "http://httpbin.org/post?course=networking&assignment=1" };
         Httpc test = new Httpc(args);
-        assertEquals("'{ \"Assignment\": 1 }'", test.data);
+        assertEquals("'{ \"Assignment\": 1 }'".getBytes(), test.data);
         assertEquals("outputFile.txt", test.outputFilename);
     }
 
