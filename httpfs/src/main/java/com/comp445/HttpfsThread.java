@@ -3,12 +3,17 @@ package com.comp445;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -149,7 +154,9 @@ public class HttpfsThread implements Runnable {
             return new HttpcResponse(404);
         } else {
             if (Files.isReadable(path)) {
+                // its readable
                 if (Files.isDirectory(path)) {
+                    // its a directory
                     final Stream<Path> listOfFiles = Files.list(path);
                     final StringBuilder container = new StringBuilder();
                     final Formatter outFmt = new Formatter(container);
@@ -166,11 +173,48 @@ public class HttpfsThread implements Runnable {
                     outFmt.close();
                     return new HttpcResponse(200, path, container.toString().getBytes());
                 } else {
-                    return new HttpcResponse(200, path, Files.readAllBytes(path));
+                    // its a file
+                    return new HttpcResponse(200, path, readUsingFileChannel(path));
                 }
             } else {
                 return new HttpcResponse(403);
             }
+        }
+    }
+
+    private byte[] readUsingFileChannel(final Path path) throws Exception {
+        try (final AsynchronousFileChannel channel = AsynchronousFileChannel.open(path, StandardOpenOption.READ)) {
+            Future<FileLock> future = channel.lock(0, channel.size(), true);
+            final FileLock lock = future.get();
+            ByteBuffer buffer;
+            if (channel.size() < 1024) {
+                buffer = ByteBuffer.allocate((int) channel.size());
+            } else {
+                buffer = ByteBuffer.allocate(1024);
+            }
+            final Future<Integer> operation = channel.read(buffer, 0);
+            operation.get();
+            final byte[] result = buffer.array();
+            buffer.clear();
+            lock.release();
+            lock.close();
+
+            return result;
+        }
+
+    }
+
+    private void writeUsingFileChannel(final Path path, final byte[] data) throws Exception {
+        try (final AsynchronousFileChannel channel = AsynchronousFileChannel.open(path, StandardOpenOption.WRITE,
+                StandardOpenOption.DSYNC, StandardOpenOption.CREATE)) {
+            Future<FileLock> future = channel.lock();
+            FileLock lock = future.get();
+            final ByteBuffer buff = ByteBuffer.wrap(data);
+            final Future<Integer> operation = channel.write(buff, 0);
+            buff.clear();
+            operation.get();
+            lock.release();
+            lock.close();
         }
     }
 
@@ -180,7 +224,7 @@ public class HttpfsThread implements Runnable {
             // its a file or doesn't exist
             if (Files.exists(path) && Files.isWritable(path)) {
                 // is a writable file
-                Files.write(path, body);
+                writeUsingFileChannel(path, body);
                 return new HttpcResponse(201);
             } else {
                 if (!Files.exists(path)) {
@@ -188,7 +232,7 @@ public class HttpfsThread implements Runnable {
                     final Path parentPath = path.getParent();
                     try {
                         Files.createDirectories(parentPath);
-                        Files.write(path, body);
+                        writeUsingFileChannel(path, body);
                         return new HttpcResponse(201);
                     } catch (Exception e) {
                         return new HttpcResponse(403);
