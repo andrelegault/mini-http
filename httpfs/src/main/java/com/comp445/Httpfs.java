@@ -5,6 +5,8 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -47,6 +49,8 @@ public class Httpfs {
 
     // ServerSocket
     private ServerSocket serverSocket;
+
+    protected static volatile ConcurrentHashMap<Path, AtomicInteger> locks = new ConcurrentHashMap<Path, AtomicInteger>();
 
     /**
      * @param args Arguments.
@@ -138,8 +142,7 @@ public class Httpfs {
 
     private void processRequest() throws Exception {
         final Socket socket = serverSocket.accept();
-        Thread thread = new Thread(new HttpfsThread(socket, verbose, dataDir));
-        thread.start();
+        new Thread(new HttpfsThread(socket, verbose, dataDir)).start();
     }
 
     public static void main(String[] args) {

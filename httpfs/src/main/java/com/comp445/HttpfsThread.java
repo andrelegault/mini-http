@@ -5,7 +5,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
-import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,6 +13,7 @@ import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -183,9 +183,13 @@ public class HttpfsThread implements Runnable {
     }
 
     private byte[] readUsingFileChannel(final Path path) throws Exception {
+        AtomicInteger check = Httpfs.locks.get(path);
+        while (check != null && check.get() == 0) {
+            check = Httpfs.locks.get(path);
+        }
+        Httpfs.locks.putIfAbsent(path, new AtomicInteger(1));
+        Httpfs.locks.get(path).incrementAndGet();
         try (final AsynchronousFileChannel channel = AsynchronousFileChannel.open(path, StandardOpenOption.READ)) {
-            Future<FileLock> future = channel.lock(0, channel.size(), true);
-            final FileLock lock = future.get();
             ByteBuffer buffer;
             if (channel.size() < 1024) {
                 buffer = ByteBuffer.allocate((int) channel.size());
@@ -196,30 +200,34 @@ public class HttpfsThread implements Runnable {
             operation.get();
             final byte[] result = buffer.array();
             buffer.clear();
-            lock.release();
-            lock.close();
 
             return result;
+        } finally {
+            final int after = Httpfs.locks.get(path).decrementAndGet();
+            if (after == 0) {
+                Httpfs.locks.remove(path);
+            }
         }
-
     }
 
     private void writeUsingFileChannel(final Path path, final byte[] data) throws Exception {
+        AtomicInteger check = Httpfs.locks.get(path);
+        while (check != null) {
+            check = Httpfs.locks.get(path);
+        }
+        Httpfs.locks.put(path, new AtomicInteger(0));
         try (final AsynchronousFileChannel channel = AsynchronousFileChannel.open(path, StandardOpenOption.WRITE,
                 StandardOpenOption.DSYNC, StandardOpenOption.CREATE)) {
-            Future<FileLock> future = channel.lock();
-            FileLock lock = future.get();
             final ByteBuffer buff = ByteBuffer.wrap(data);
             final Future<Integer> operation = channel.write(buff, 0);
             buff.clear();
             operation.get();
-            lock.release();
-            lock.close();
+        } finally {
+            Httpfs.locks.remove(path);
         }
     }
 
     private HttpcResponse processPost(final Path path, final byte[] body) throws Exception {
-        // TODO: use synchronization to prevent deadlocks and livelocks
         if (!Files.isDirectory(path)) {
             // its a file or doesn't exist
             if (Files.exists(path) && Files.isWritable(path)) {
