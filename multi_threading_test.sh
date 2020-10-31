@@ -1,9 +1,9 @@
 #!/bin/bash
 PATH_TO_JAR="httpc/target/httpc-1.0-SNAPSHOT-jar-with-dependencies.jar"
-GET_OPTIONS="get -v http://localhost:8080/data.txt"
-POST_OPTIONS="post -v -f /home/void/mini-http/httpfs/DATA/data3.pdf http://localhost:8080/threading.pdf"
-
-# trap bashtrap int
+GET_OPTIONS="get http://localhost:8080/test.txt &"
+POST_OPTIONS="post -d \"Hello World!\" http://localhost:8080/threading.txt &"
+GET_COMMAND="java -jar ${PATH_TO_JAR} ${GET_OPTIONS}"
+POST_COMMAND="java -jar ${PATH_TO_JAR} ${POST_OPTIONS}"
 
 usage() {
 	echo "Usage: $0 [-c <positive int>]" 1>&2;
@@ -11,26 +11,30 @@ usage() {
 }
 
 test_get() {
-	GET_COMMAND="java -jar ${PATH_TO_JAR} ${GET_OPTIONS}"
 
-	echo "Testing multiple readers"
 	local i=0
 	while [[ "$i" -lt "${CLIENT_NUM}" ]]
 	do
-		eval $GET_COMMAND &
+		eval "${GET_COMMAND}"
 		((i++))
 	done
 }
 
 test_post() {
-	POST_COMMAND="java -jar ${PATH_TO_JAR} ${POST_OPTIONS}"
-
-	echo "Testing multiple writers"
-	echo
 	local i=0
 	while [[ "$i" -lt "${CLIENT_NUM}" ]]
 	do
-		eval "java -jar ${PATH_TO_JAR} post -v -d ${i} http://localhost:8080/threading.txt &"
+		eval "${POST_COMMAND}"
+		((i++))
+	done
+}
+
+test_get_post() {
+	local i=0
+	while [[ "$i" -lt "${CLIENT_NUM}" ]]
+	do
+		eval "${POST_COMMAND}"
+		eval "${GET_COMMAND}"
 		((i++))
 	done
 }
@@ -57,12 +61,18 @@ if [[ "$CLIENT_NUM" -eq "0" ]]; then
 	usage
 fi
 
-#test_get
+echo "Testing multiple reads on same file"
+test_get
 
-#echo "Sleeping for 2 seconds..."
-#sleep 2
+echo "Sleeping for 1 second..." && sleep 1
 
+echo "Testing multiple writes on same file"
 test_post
+
+echo "Sleeping for 1 second..." && sleep 1
+
+echo "Testing multiple read and writes on same file"
+test_get_post
 
 bashtrap() {
 	echo "CTRL+C detected... exiting!"
