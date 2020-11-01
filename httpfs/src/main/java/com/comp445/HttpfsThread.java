@@ -217,7 +217,7 @@ public class HttpfsThread implements Runnable {
         }
         Httpfs.locks.put(path, new AtomicInteger(0));
         try (final AsynchronousFileChannel channel = AsynchronousFileChannel.open(path, StandardOpenOption.WRITE,
-                StandardOpenOption.DSYNC, StandardOpenOption.CREATE)) {
+                StandardOpenOption.DSYNC, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
             final ByteBuffer buff = ByteBuffer.wrap(data);
             final Future<Integer> operation = channel.write(buff, 0);
             buff.clear();
