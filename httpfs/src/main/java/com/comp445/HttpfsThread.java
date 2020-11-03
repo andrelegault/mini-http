@@ -190,12 +190,7 @@ public class HttpfsThread implements Runnable {
         Httpfs.locks.putIfAbsent(path, new AtomicInteger(1));
         Httpfs.locks.get(path).incrementAndGet();
         try (final AsynchronousFileChannel channel = AsynchronousFileChannel.open(path, StandardOpenOption.READ)) {
-            ByteBuffer buffer;
-            if (channel.size() < 1024) {
-                buffer = ByteBuffer.allocate((int) channel.size());
-            } else {
-                buffer = ByteBuffer.allocate(1024);
-            }
+            final ByteBuffer buffer = ByteBuffer.allocate((int) channel.size());
             final Future<Integer> operation = channel.read(buffer, 0);
             operation.get();
             final byte[] result = buffer.array();
