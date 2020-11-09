@@ -50,5 +50,6 @@
   <modules>
     <module>httpc</module>
     <module>httpfs</module>
+      <module>udp</module>
   </modules>
 </project>
