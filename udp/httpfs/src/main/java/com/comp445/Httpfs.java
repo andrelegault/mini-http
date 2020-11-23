@@ -141,6 +141,7 @@ public class Httpfs {
     }
 
     private void processRequest() throws Exception {
+        // TODO: replace `accept` with 3-way handshake
         final Socket socket = serverSocket.accept();
         new Thread(new HttpfsThread(socket, verbose, dataDir)).start();
     }

@@ -53,6 +53,7 @@ public abstract class HttpcRequest {
     }
 
     protected final String connect() throws Exception {
+        // TODO: use 3-way handshake to connect
         final int port = url.getPort();
         socket = new Socket(url.getHost(), port != -1 ? port : DEFAULT_PORT);
         out = socket.getOutputStream();
