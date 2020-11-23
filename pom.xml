@@ -48,7 +48,7 @@
   </dependencies>
 
   <modules>
-    <module>httpc</module>
-    <module>httpfs</module>
+    <module>tcp</module>
+    <module>udp</module>
   </modules>
 </project>
