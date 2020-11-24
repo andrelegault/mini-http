@@ -43,6 +43,7 @@ public class Server {
             byte[] receiveData = new byte[1024];
             DatagramPacket receivePacket = new DatagramPacket(receiveData,
                     receiveData.length);
+            boolean synReceived = false;
             while(true)
             {
                 int packetNumber = 1;
@@ -67,6 +68,7 @@ public class Server {
                 System.out.println("Data: " + messageString);
 
                 if(typeInt == 1){
+                    synReceived = true;
                     byte[] replyMessage = " ".getBytes();
                     byte requestType = 2;
                     byte[] newSeqNum = ByteBuffer.allocate(4).putInt(packetNumber).array();
@@ -74,9 +76,9 @@ public class Server {
                     DatagramPacket sendPacket = new DatagramPacket(packetBuffer, packetBuffer.length,
                             receivePacket.getAddress(), receivePacket.getPort());
                     serverSocket.send(sendPacket);
-                }else if(typeInt == 3){
+                }else if(typeInt == 3 && synReceived){
                     System.out.println("ThreeWay Handshake Completed");
-                }else if(typeInt == 4){
+                }else if(typeInt == 4 && synReceived){
                     byte[] replyMessage = "Hi".getBytes();
                     byte requestType = 4;
                     byte[] newSeqNum = ByteBuffer.allocate(4).putInt(packetNumber).array();

@@ -13,10 +13,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
-enum Type { SYN, SYNACK, ACK, DATA }
+enum Type { SYN, ACK, DATA }
 
 public class Client {
     private final String filePath;
+    static boolean synAckReceived = false;
     public Client(final String filePath) {
         this.filePath = filePath;
         try {
@@ -55,7 +56,7 @@ public class Client {
         return baos.toByteArray();
     }
 
-    private DatagramPacket createPacket(InetAddress serverAddress, byte type, int sequenceNum, Boolean dataToSend) throws IOException {
+    private DatagramPacket createPacket(InetAddress serverAddress, byte type, int sequenceNum, boolean dataToSend) throws IOException {
         byte[] data;
         short routerPort = 3000;
         byte[] seqNum = ByteBuffer.allocate(4).putInt(sequenceNum).array();
@@ -94,6 +95,7 @@ public class Client {
         int portNumber = Integer.parseInt(toBinary(portNumberByte),2);
         String messageString = new String(message);
         System.out.println("Type: " + typeInt);
+
         if(typeInt == 4) {
             System.out.println("Data: " + messageString);
         }
@@ -106,6 +108,7 @@ public class Client {
 
     private void tcpHandshake(InetAddress serverAddress, Type type, int sequenceNum) throws IOException {
         DatagramSocket socket = new DatagramSocket();
+
         if(type == Type.SYN){
             System.out.println("ThreeWay Handshake Initiated\n");
             System.out.println("SYN Sent To Server\n");
@@ -113,25 +116,27 @@ public class Client {
             sequenceNum++;
             DatagramPacket packet = createPacket(serverAddress, packetType, sequenceNum,false);
             sendPacket(socket, packet);
+
             byte[] receivedMessage = receivePacket(socket);
 
             int receivedPacketType = Integer.parseInt(toBinary(Arrays.copyOfRange(receivedMessage, 0, 1)),2);
             int receivedPacketSeqNum = Integer.parseInt(toBinary(Arrays.copyOfRange(receivedMessage, 1, 5)),2);
 
             if(receivedPacketType == 2){
+                synAckReceived = true;
                 System.out.println("SYN/ACK Received From Server\n");
-                tcpHandshake(serverAddress, Type.SYNACK, receivedPacketSeqNum);
+                tcpHandshake(serverAddress, Type.ACK, receivedPacketSeqNum);
             }else{
                 System.out.println("SYN/ACK not received");
             }
-        }else if(type == Type.SYNACK){
+        }else if(type == Type.ACK && synAckReceived){
             System.out.println("ACK Sent To Server\n");
             byte packetType = 3;
             sequenceNum++;
             DatagramPacket packet = createPacket(serverAddress, packetType, sequenceNum,false);
             sendPacket(socket, packet);
             tcpHandshake(serverAddress, Type.DATA, sequenceNum);
-        }else if(type == Type.DATA){
+        }else if(type == Type.DATA && synAckReceived){
             System.out.println("ThreeWay Handshake Complete\n");
             System.out.println("Sending Data");
             byte packetType = 4;
@@ -144,7 +149,6 @@ public class Client {
     private void run() throws Exception {
         InetAddress address = InetAddress.getLocalHost();
         tcpHandshake(address, Type.SYN, 0);
-
     }
 
     public static void main(final String[] args) {
