@@ -1,0 +1,30 @@
+GET /get?course=networking&assignment=1 HTTP/1.0
+Host: httpbin.org
+Upgrade-Insecure-Requests: 1
+Connection: Close
+Accept-Encoding: gzip, deflate, br
+DNT: 1
+HTTP/1.1 200 OK
+Date: Tue, 24 Nov 2020 04:43:33 GMT
+Content-Type: application/json
+Content-Length: 382
+Connection: close
+Server: gunicorn/19.9.0
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Credentials: true
+
+{
+  "args": {
+    "assignment": "1", 
+    "course": "networking"
+  }, 
+  "headers": {
+    "Accept-Encoding": "gzip, deflate, br", 
+    "Dnt": "1", 
+    "Host": "httpbin.org", 
+    "Upgrade-Insecure-Requests": "1", 
+    "X-Amzn-Trace-Id": "Root=1-5fbc8f75-1c9fa66800772a1d18a6ef1c"
+  }, 
+  "origin": "67.68.86.48", 
+  "url": "http://httpbin.org/get?course=networking&assignment=1"
+}
