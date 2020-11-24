@@ -7,20 +7,29 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
- * Packet represents a simulated network packet.
- * As we don't have unsigned types in Java, we can achieve this by using a larger type.
+ * Packet represents a simulated network packet. As we don't have unsigned types
+ * in Java, we can achieve this by using a larger type.
  */
 public class Packet {
-
     public static final int MIN_LEN = 11;
-    public static final int MAX_LEN = 11 + 1024;
+    public static final int MAX_LEN = 11 + 1013;
 
+    /**
+     * Types can be one of the following: SYN, ACK, SYN-ACK, or NAK.
+     * 
+     * 0 indicates a SYN packet.
+     * 
+     * 1 indicates an ACK packet.
+     * 
+     * 2 indicates a SYN-ACK packet.
+     * 
+     * 3 indicates a NAK packet.
+     */
     private final int type;
     private final long sequenceNumber;
     private final InetAddress peerAddress;
     private final int peerPort;
     private final byte[] payload;
-
 
     public Packet(int type, long sequenceNumber, InetAddress peerAddress, int peerPort, byte[] payload) {
         this.type = type;
@@ -51,21 +60,17 @@ public class Packet {
     }
 
     /**
-     * Creates a builder from the current packet.
-     * It's used to create another packet by re-using some parts of the current packet.
+     * Creates a builder from the current packet. It's used to create another packet
+     * by re-using some parts of the current packet.
      */
-    public Builder toBuilder(){
-        return new Builder()
-                .setType(type)
-                .setSequenceNumber(sequenceNumber)
-                .setPeerAddress(peerAddress)
-                .setPortNumber(peerPort)
-                .setPayload(payload);
+    public Builder toBuilder() {
+        return new Builder().setType(type).setSequenceNumber(sequenceNumber).setPeerAddress(peerAddress)
+                .setPortNumber(peerPort).setPayload(payload);
     }
 
     /**
-     * Writes a raw presentation of the packet to byte buffer.
-     * The order of the buffer should be set as BigEndian.
+     * Writes a raw presentation of the packet to byte buffer. The order of the
+     * buffer should be set as BigEndian.
      */
     private void write(ByteBuffer buf) {
         buf.put((byte) type);
@@ -76,8 +81,8 @@ public class Packet {
     }
 
     /**
-     * Create a byte buffer in BigEndian for the packet.
-     * The returned buffer is flipped and ready for get operations.
+     * Create a byte buffer in BigEndian for the packet. The returned buffer is
+     * flipped and ready for get operations.
      */
     public ByteBuffer toBuffer() {
         ByteBuffer buf = ByteBuffer.allocate(MAX_LEN).order(ByteOrder.BIG_ENDIAN);
@@ -109,7 +114,7 @@ public class Packet {
         builder.setType(Byte.toUnsignedInt(buf.get()));
         builder.setSequenceNumber(Integer.toUnsignedLong(buf.getInt()));
 
-        byte[] host = new byte[]{buf.get(), buf.get(), buf.get(), buf.get()};
+        byte[] host = new byte[] { buf.get(), buf.get(), buf.get(), buf.get() };
         builder.setPeerAddress(Inet4Address.getByAddress(host));
         builder.setPortNumber(Short.toUnsignedInt(buf.getShort()));
 
