@@ -21,6 +21,7 @@ public class Response {
     // Protocol supported by this response.
     private static final String PROTOCOL = "HTTP";
 
+    // Extensions that are to be sent as inline.
     private static final String[] inlineExts = { "jpg", "png", "html", "htm", "txt" };
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss z");

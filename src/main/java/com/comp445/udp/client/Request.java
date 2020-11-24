@@ -52,6 +52,9 @@ public abstract class Request {
         }
     }
 
+    // TODO: establish handshake
+    // TODO: create packet
+    // TODO: set payload of packet to request (bytes)
     protected final String connect() throws Exception {
         final int port = url.getPort();
         socket = new Socket(url.getHost(), port != -1 ? port : DEFAULT_PORT);
