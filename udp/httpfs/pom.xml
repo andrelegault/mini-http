@@ -10,7 +10,7 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>com.comp445</groupId>
+  <groupId>com.comp445.udp</groupId>
   <artifactId>httpfs</artifactId>
   <version>1.0-SNAPSHOT</version>
 

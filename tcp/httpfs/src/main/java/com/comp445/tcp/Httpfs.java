@@ -1,4 +1,4 @@
-package com.comp445;
+package com.comp445.tcp;
 
 import java.net.ServerSocket;
 import java.net.Socket;

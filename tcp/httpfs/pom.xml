@@ -10,7 +10,7 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>com.comp445</groupId>
+  <groupId>com.comp445.tcp</groupId>
   <artifactId>httpfs</artifactId>
   <version>1.0-SNAPSHOT</version>
 
@@ -78,7 +78,7 @@
           <configuration>
             <archive>
               <manifest>
-                <mainClass>com.comp445.Httpfs</mainClass>
+                <mainClass>com.comp445.tcp.Httpfs</mainClass>
               </manifest>
             </archive>
             <descriptorRefs>

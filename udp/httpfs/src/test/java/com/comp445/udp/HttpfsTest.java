@@ -1,4 +1,4 @@
-package com.comp445;
+package com.comp445.udp;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;

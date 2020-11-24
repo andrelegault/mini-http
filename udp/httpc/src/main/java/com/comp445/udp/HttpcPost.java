@@ -1,4 +1,4 @@
-package com.comp445;
+package com.comp445.udp;
 
 import java.net.MalformedURLException;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.comp445;
+package com.comp445.udp;
 
 import java.io.File;
 import java.io.FileWriter;
