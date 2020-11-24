@@ -57,7 +57,7 @@
         <version>3.2.4</version>
         <executions>
           <execution>
-            <id>build-client</id>
+            <id>build-tcp-client</id>
             <phase>package</phase>
             <goals>
               <goal>shade</goal>
@@ -68,11 +68,11 @@
                   <mainClass>com.comp445.tcp.client.Client</mainClass>
                 </transformer>
               </transformers>
-              <finalName>client</finalName>
+              <finalName>tcp-client</finalName>
             </configuration>
           </execution>
           <execution>
-            <id>build-server</id>
+            <id>build-tcp-server</id>
             <phase>package</phase>
             <goals>
               <goal>shade</goal>
@@ -83,7 +83,7 @@
                   <mainClass>com.comp445.tcp.server.Server</mainClass>
                 </transformer>
               </transformers>
-              <finalName>server</finalName>
+              <finalName>tcp-server</finalName>
             </configuration>
           </execution>
         </executions>
