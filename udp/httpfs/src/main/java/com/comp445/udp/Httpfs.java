@@ -1,7 +1,6 @@
 package com.comp445.udp;
 
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.DatagramSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,8 +46,8 @@ public class Httpfs {
     // Path to desired endpoint.
     public Path dataDir = Paths.get(cwd, "/DATA");
 
-    // ServerSocket
-    private ServerSocket serverSocket;
+    // DatagramSocket
+    private DatagramSocket datagramSocket;
 
     protected static volatile ConcurrentHashMap<Path, AtomicInteger> locks = new ConcurrentHashMap<Path, AtomicInteger>();
 
@@ -124,7 +123,7 @@ public class Httpfs {
 
     private void run() throws Exception {
         try {
-            serverSocket = new ServerSocket(this.port);
+            datagramSocket = new DatagramSocket(this.port);
             log("Server successfully started!");
             log("Listening on port: " + this.port + " | Data directory: " + dataDir.toString());
             while (true) {
@@ -142,8 +141,8 @@ public class Httpfs {
 
     private void processRequest() throws Exception {
         // TODO: replace `accept` with 3-way handshake
-        final Socket socket = serverSocket.accept();
-        new Thread(new HttpfsThread(socket, verbose, dataDir)).start();
+        // final Socket socket = datagramSocket.accept();
+        // new Thread(new HttpfsThread(socket, verbose, dataDir)).start();
     }
 
     public static void main(String[] args) {
