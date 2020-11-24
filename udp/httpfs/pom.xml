@@ -78,7 +78,7 @@
           <configuration>
             <archive>
               <manifest>
-                <mainClass>com.comp445.Httpfs</mainClass>
+                <mainClass>com.comp445.udp.Httpfs</mainClass>
               </manifest>
             </archive>
             <descriptorRefs>
