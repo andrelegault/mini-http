@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -50,6 +52,8 @@ public class Server {
     private DatagramSocket datagramSocket;
 
     protected static volatile ConcurrentHashMap<Path, AtomicInteger> locks = new ConcurrentHashMap<Path, AtomicInteger>();
+
+    private static final Logger logger = Logger.getLogger(Server.class.getName());
 
     /**
      * @param args Arguments.
@@ -136,10 +140,11 @@ public class Server {
     }
 
     private void log(final String output) {
-        System.out.println("[localhost:" + this.port + "] => " + output);
+        logger.log(Level.INFO, "[localhost:" + this.port + "] => " + output);
     }
 
     private void processRequest() throws Exception {
+        // https://www.baeldung.com/udp-in-java
         // TODO: replace `accept` with 3-way handshake
         // final Socket socket = datagramSocket.accept();
         // new Thread(new ServerThread(socket, verbose, dataDir)).start();
