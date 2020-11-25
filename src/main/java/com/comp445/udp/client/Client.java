@@ -1,14 +1,32 @@
 package com.comp445.udp.client;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
+import com.comp445.udp.Connection;
+import com.comp445.udp.ConnectionThread;
+import com.comp445.udp.ManagedPacket;
+import com.comp445.udp.Packet;
+import com.comp445.udp.Router;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -17,6 +35,8 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+
+import static java.nio.channels.SelectionKey.OP_READ;
 
 public class Client {
     // General usage instructions
@@ -64,6 +84,15 @@ public class Client {
     // Filename to output to
     protected String outputFilename;
 
+    private final Logger logger = Logger.getLogger(Client.class.getName());
+
+    public static final ConcurrentHashMap<InetAddress, Connection> connections = new ConcurrentHashMap<InetAddress, Connection>();
+    private Selector selector;
+
+    private static final int PORT = 41830;
+    private static final String HOSTNAME = "192.168.2.125";
+    public static final InetSocketAddress ADDRESS = new InetSocketAddress(HOSTNAME, PORT);
+
     /**
      * Constructor.
      * 
@@ -75,6 +104,7 @@ public class Client {
         try {
             parse();
             run();
+            this.selector = Selector.open();
         } catch (Exception e) {
             if (this.action == null || this.action.equalsIgnoreCase("help")) {
                 System.err.println(usageGeneral);
@@ -256,6 +286,80 @@ public class Client {
         }
     }
 
+    // synchronous connection establishment
+    private void establishConnection(final DatagramChannel channel) throws IOException {
+        // SEND SYN
+
+        final Packet syn = new Packet.Builder().setType(0).setSequenceNumber(0L).setPortNumber(this.target.getPort())
+                .setPeerAddress(InetAddress.getByName(this.target.getHost())).build();
+
+        Client.connections.putIfAbsent(syn.getPeerAddress(), new Connection());
+
+        // try to get a key but wait for a maximum of 5 seconds
+        final Set<SelectionKey> keys = selector.selectedKeys();
+        do {
+            channel.send(syn.toBuffer(), Router.ADDRESS);
+            selector.select(5000);
+        } while (keys.isEmpty());
+
+        // GET SYNACK
+        final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN);
+        channel.receive(buf);
+        buf.flip();
+
+        final Packet resp = Packet.fromBuffer(buf);
+
+        // is valid response
+        if (resp.getSequenceNumber() == syn.getSequenceNumber() + 1 && resp.getType() == 2) {
+            // SYNACK
+            // server is listening
+            final Connection conn = Client.connections.get(resp.getPeerAddress());
+            conn.setConnected(true);
+            conn.getReceived().put(resp.getSequenceNumber(), new ManagedPacket(resp));
+        }
+
+        // SEND ACK
+        final Packet ack = new Packet.Builder().setType(1).setSequenceNumber(2L).setPortNumber(this.target.getPort())
+                .setPeerAddress(InetAddress.getByName(this.target.getHost())).build();
+
+        channel.send(ack.toBuffer(), Router.ADDRESS);
+    }
+
+    private Packet[] segmentPackets(final ByteBuffer buf) throws UnknownHostException {
+        buf.flip();
+        final int maxPayloadSize = Packet.MAX_LEN - Packet.MIN_LEN; // 1013
+        final int numPackets = (int) Math.ceil(buf.limit() / (maxPayloadSize));
+        final Packet[] segmented = new Packet[numPackets];
+        for (int i = 0; i < numPackets; i++) {
+            final byte[] chunk = new byte[i == numPackets - 1 ? buf.capacity() - buf.position() : maxPayloadSize];
+            buf.get(chunk);
+            // Here we're using i+2 because the first 2 sequence nubmers are reserved for
+            // the handshake
+            segmented[i] = new Packet.Builder().setType(4).setSequenceNumber(i + 2).setPortNumber(this.target.getPort())
+                    .setPeerAddress(InetAddress.getByName(this.target.getHost())).setPayload(chunk).build();
+        }
+        return segmented;
+    }
+
+    private void connect() throws IOException {
+        try (DatagramChannel channel = DatagramChannel.open()) {
+            channel.configureBlocking(false);
+            channel.bind(Router.ADDRESS);
+            channel.register(selector, OP_READ);
+
+            establishConnection(channel);
+
+            final Packet[] packets = segmentPackets(ByteBuffer.wrap(this.req.toBytes()).order(ByteOrder.BIG_ENDIAN));
+            for (final Packet p : packets) {
+                if (this.verbose) {
+                    logger.info("Sending request!");
+                }
+                new ConnectionThread(channel, selector, p).start();
+            }
+
+        }
+    }
+
     private void run() throws Exception {
         if (this.action.equalsIgnoreCase("get")) {
             this.req = new GetRequest(this.target, this.headers, this.verbose, this.outputFilename);
@@ -263,7 +367,8 @@ public class Client {
             this.req = new PostRequest(this.target, this.headers, this.data, this.verbose, this.outputFilename);
         }
         if (this.req != null) {
-            this.req.connect();
+            // TODO: handle connection in client
+            connect();
         }
     }
 
