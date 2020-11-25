@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Formatter;
 import java.util.Map;
 
@@ -20,24 +22,24 @@ public abstract class Request {
     protected OutputStream out;
     private URL url;
     private Map<String, String> headers;
-    private Socket socket;
-    private InputStream in;
-    // private BufferedReader in;
     protected byte[] data;
     private final boolean verbose;
     private final String outputFilename;
     private static final int DEFAULT_PORT = 80;
 
-    private StringBuilder verboseContainer;
-    protected Formatter outFmt;
+    private final StringBuilder verboseContainer = new StringBuilder();
+    protected final Formatter outFmt = new Formatter(verboseContainer);
 
     protected Request(final URL target, final Map<String, String> headers, final boolean verbose,
-            final String outputFilename, final byte[] data) {
+            final String outputFilename, final byte[] data) throws IOException {
         this.url = target;
         this.headers = headers;
         this.verbose = verbose;
         this.outputFilename = outputFilename;
         this.data = data;
+
+        setRequestHeaders();
+        close();
     }
 
     protected abstract String getMethod();
@@ -52,50 +54,17 @@ public abstract class Request {
         }
     }
 
-    // TODO: establish handshake
-    // TODO: create packet
-    // TODO: set payload of packet to request (bytes)
-    protected final String connect() throws Exception {
-        final int port = url.getPort();
-        socket = new Socket(url.getHost(), port != -1 ? port : DEFAULT_PORT);
-        out = socket.getOutputStream();
-        in = socket.getInputStream();
-        verboseContainer = new StringBuilder();
-        outFmt = new Formatter(verboseContainer);
+    // TODO: establish connection (using handshake)
+    // TODO: create request
+    // TODO: create packet from request
+    // TODO: send packet
 
-        setRequestHeaders();
-        if (this instanceof PostRequest) {
-            outFmt.format("Content-Length: %d\r%n", data == null ? 0 : data.length);
-            outFmt.format("Content-Type: text/plain\r%n");
-        }
-
-        final String sent = verboseContainer.toString();
-        out.write(sent.getBytes());
-        out.write("\r\n".getBytes());
-        if (data != null) {
-            for (int i = 0; i < data.length; i++) {
-                out.write((char) (data[i] & 0xFF));
-            }
-        }
-
-        final String received = readData();
-        close();
-
-        if (verbose) {
-            System.out.println(sent);
-            System.out.println(received);
-        }
-
-        if (received.contains("HTTP/1.0 30") || received.contains("HTTP/1.1 30")) {
-            url = new URL(getURL(received));
-            return connect();
-        }
-
-        if (outputFilename != null) {
-            writeToFile(sent, received);
-        }
-
-        return received;
+    public byte[] toBytes() {
+        final byte[] headerBytes = outFmt.toString().getBytes();
+        final ByteBuffer buf = ByteBuffer.allocate(headerBytes.length + data.length).order(ByteOrder.BIG_ENDIAN);
+        buf.put(ByteBuffer.wrap(headerBytes));
+        buf.put(ByteBuffer.wrap(data));
+        return buf.array();
     }
 
     private String readData() throws IOException {
@@ -111,9 +80,7 @@ public abstract class Request {
     private void close() throws IOException {
         outFmt.close();
         verboseContainer.setLength(0);
-        in.close();
-        out.close();
-        socket.close();
+        // TODO: close udp socket whatever
     }
 
     private String getQueryOrEmptyString() {
@@ -137,6 +104,11 @@ public abstract class Request {
                 outFmt.format("%s: %s\r%n", capitalize(entry.getKey()), entry.getValue());
             }
         }
+        if (this instanceof PostRequest) {
+            outFmt.format("Content-Length: %d\r%n", data == null ? 0 : data.length);
+            outFmt.format("Content-Type: text/plain\r%n");
+        }
+        outFmt.format("\r%n");
     }
 
     private String capitalize(final String word) {
