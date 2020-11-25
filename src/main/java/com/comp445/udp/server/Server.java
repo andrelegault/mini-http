@@ -1,13 +1,20 @@
 package com.comp445.udp.server;
 
-import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.DatagramChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.comp445.udp.Connection;
+import com.comp445.udp.Packet;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -15,6 +22,8 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * This class represents the httpc server.
@@ -48,10 +57,10 @@ public class Server {
     // Path to desired endpoint.
     public Path dataDir = Paths.get(cwd, "/DATA");
 
-    // DatagramSocket
-    private DatagramSocket datagramSocket;
-
     protected static volatile ConcurrentHashMap<Path, AtomicInteger> locks = new ConcurrentHashMap<Path, AtomicInteger>();
+
+    /// Holds the connection for each socket address
+    protected static volatile ConcurrentHashMap<InetAddress, Connection> connections = new ConcurrentHashMap<InetAddress, Connection>();
 
     private static final Logger logger = Logger.getLogger(Server.class.getName());
 
@@ -126,21 +135,52 @@ public class Server {
     }
 
     private void run() throws Exception {
-        try {
-            datagramSocket = new DatagramSocket(this.port);
-            log("Server successfully started!");
+        try (DatagramChannel channel = DatagramChannel.open()) {
+            channel.bind(new InetSocketAddress(this.port));
             log("Listening on port: " + this.port + " | Data directory: " + dataDir.toString());
-            while (true) {
-                processRequest();
-            }
+            final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
 
+            for (;;) {
+                buf.clear();
+
+                // fills the buffer with the received request
+                final SocketAddress router = channel.receive(buf);
+
+                // start from beginning of buffer
+                buf.flip();
+
+                // create the packet from the filled buffer
+                Packet packet = Packet.fromBuffer(buf);
+
+                // create connection if nonexistent
+                connections.putIfAbsent(packet.getPeerAddress(), new Connection());
+                // connection object for address x port obtained
+                final Connection conn = connections.get(packet.getPeerAddress());
+
+                // the `fromBuffer` factory method will traverse the bytes in the buffer
+                // therefore set the starting position to 0 again
+                buf.flip();
+
+                // what content to return to the client
+                String payload = new String(packet.getPayload(), UTF_8);
+
+                // TODO: construct response incrementally
+
+                logger.info("Packet: " + packet.toString());
+                logger.info("Payload: " + payload.toString());
+                logger.info("Router: " + router);
+
+                // build response packet
+                Packet resp = packet.toBuilder().setPayload(payload.getBytes()).build();
+                channel.send(resp.toBuffer(), router);
+            }
         } catch (Exception e) {
             throw new Exception(e);
         }
     }
 
     private void log(final String output) {
-        logger.log(Level.INFO, "[localhost:" + this.port + "] => " + output);
+        logger.info("[localhost:" + this.port + "] => " + output);
     }
 
     private void processRequest() throws Exception {
