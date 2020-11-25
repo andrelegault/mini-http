@@ -24,6 +24,8 @@ public class Packet {
      * 2 indicates a SYN-ACK packet.
      * 
      * 3 indicates a NAK packet.
+     * 
+     * 4 indicates a DATA packet.
      */
     private final int type;
     private final long sequenceNumber;
@@ -111,13 +113,20 @@ public class Packet {
 
         Builder builder = new Builder();
 
+        // get a single byte
         builder.setType(Byte.toUnsignedInt(buf.get()));
+
+        // get 4 bytes (stored in long due to unsigned)
         builder.setSequenceNumber(Integer.toUnsignedLong(buf.getInt()));
 
+        // get 4x1 byte = 4bytes
         byte[] host = new byte[] { buf.get(), buf.get(), buf.get(), buf.get() };
         builder.setPeerAddress(Inet4Address.getByAddress(host));
+
+        // get 2 bytes (stored in int due to unsigned)
         builder.setPortNumber(Short.toUnsignedInt(buf.getShort()));
 
+        // get the rest of the buffer (maximum 1013 bytes)
         byte[] payload = new byte[buf.remaining()];
         buf.get(payload);
         builder.setPayload(payload);
@@ -176,4 +185,5 @@ public class Packet {
             return new Packet(type, sequenceNumber, peerAddress, portNumber, payload);
         }
     }
+
 }
