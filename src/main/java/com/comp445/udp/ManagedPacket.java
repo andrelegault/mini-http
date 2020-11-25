@@ -1,19 +1,18 @@
 package com.comp445.udp;
 
-import java.nio.channels.DatagramChannel;
-
 public class ManagedPacket {
     /**
-     * Packet that includes things such as a timer, etc.
+     * Packet that includes the fields necessary to implement selective repeat.
+     * Basically a wrapper class for Packet but with a state.
      */
-    
-    final Packet packet;
-    final boolean acknowledged;
 
-    // TODO: add timer
-    public ManagedPacket(Packet packet, DatagramChannel channel) {
+    final protected Packet packet;
+    public boolean acked;
+
+    // TODO: add some sort of timer
+    public ManagedPacket(Packet packet) {
         this.packet = packet;
-        this.acknowledged = false;
+        this.acked = false;
     }
-    
+
 }
