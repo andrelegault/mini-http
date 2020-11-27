@@ -1,9 +1,5 @@
 package com.comp445.tcp.server;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.comp445.tcp.client.Client;
 
 import org.junit.jupiter.api.Test;

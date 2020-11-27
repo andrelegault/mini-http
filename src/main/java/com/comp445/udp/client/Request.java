@@ -3,9 +3,7 @@ package com.comp445.udp.client;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.Socket;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -39,7 +37,6 @@ public abstract class Request {
         this.data = data;
 
         setRequestHeaders();
-        close();
     }
 
     protected abstract String getMethod();
@@ -61,26 +58,16 @@ public abstract class Request {
 
     public byte[] toBytes() {
         final byte[] headerBytes = outFmt.toString().getBytes();
-        final ByteBuffer buf = ByteBuffer.allocate(headerBytes.length + data.length).order(ByteOrder.BIG_ENDIAN);
+        final ByteBuffer buf = ByteBuffer.allocate(headerBytes.length + (data != null ? data.length : 0)).order(ByteOrder.BIG_ENDIAN);
         buf.put(ByteBuffer.wrap(headerBytes));
-        buf.put(ByteBuffer.wrap(data));
+        if (data != null)
+            buf.put(ByteBuffer.wrap(data));
         return buf.array();
-    }
-
-    private String readData() throws IOException {
-        int character;
-        final StringBuilder container = new StringBuilder();
-
-        while ((character = in.read()) != -1) {
-            container.append((char) character);
-        }
-        return container.toString();
     }
 
     private void close() throws IOException {
         outFmt.close();
         verboseContainer.setLength(0);
-        // TODO: close udp socket whatever
     }
 
     private String getQueryOrEmptyString() {

@@ -1,5 +1,7 @@
 package com.comp445.udp;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
@@ -19,6 +21,11 @@ public class ConnectionThread extends Thread {
         this.packet = packet;
     }
 
+    private void sendPacket(final Packet p, InetSocketAddress to) throws IOException {
+        System.out.println("Sending a packet of type " + p.getType());
+        channel.send(p.toBuffer(), to);
+    }
+
     @Override
     public void run() {
         try {
@@ -26,7 +33,7 @@ public class ConnectionThread extends Thread {
 
             final Set<SelectionKey> keys = selector.selectedKeys();
             do {
-                channel.send(packet.toBuffer(), Router.ADDRESS);
+                sendPacket(packet, Router.ADDRESS);
                 selector.select(5000);
             } while (keys.isEmpty());
 
@@ -38,11 +45,14 @@ public class ConnectionThread extends Thread {
             final Packet resp = Packet.fromBuffer(buf);
 
             // is valid response
-            if (resp.getSequenceNumber() == packet.getSequenceNumber() + 1) {
+            if (resp.getSequenceNumber() == packet.getSequenceNumber()) {
+                System.out.println("valid response!");
                 // server is listening
                 final Connection conn = Client.connections.get(resp.getPeerAddress());
-                conn.getSent().get(packet.getSequenceNumber()).acked = true;
-                conn.getReceived().put(resp.getSequenceNumber(), new ManagedPacket(resp));
+                // conn.getSent().get(packet.getSequenceNumber()).acked = true;
+                conn.received.put(resp.getSequenceNumber(), resp);
+            } else {
+                System.out.println("Invalid response!");
             }
         } catch (Exception e) {
             e.printStackTrace();

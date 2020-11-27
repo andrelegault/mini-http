@@ -2,6 +2,7 @@ package com.comp445.udp.server;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
@@ -18,18 +19,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-public class ServerThread implements Runnable {
+public class ServerThread extends Thread {
     private static final Pattern headerPattern = Pattern.compile(
             "([Gg][Ee][Tt]|[Pp][Oo][Ss][Tt]) (\\/(\\w+\\/)*((\\w+\\.\\w+)|\\w+|(?!\\/))) [Hh][Tt][Tt][Pp]\\/1\\.[10]");
     private final boolean verbose;
-    private final Socket socket;
     private final Path dataDir;
+    private final InputStream in;
+    private final InetAddress peer;
     private final static int NEWLINE = 0x0A;
 
-    public ServerThread(final Socket socket, final boolean verbose, final Path dataDir) {
-        this.socket = socket;
+    public ServerThread(final InetAddress peer, final InputStream in, final boolean verbose, final Path dataDir) {
+        System.out.println("New serverThread created!!");
         this.verbose = verbose;
         this.dataDir = dataDir;
+        this.in = in;
+        this.peer = peer;
     }
 
     private void log(final String output) {
@@ -39,7 +43,7 @@ public class ServerThread implements Runnable {
     protected Map<String, String> extractHeaders(final InputStream in) throws Exception {
         final Map<String, String> headers = new HashMap<String, String>();
         String inputLine;
-        while ((inputLine = readLine(in)) != null) {
+        while ((inputLine = readLine()) != null) {
             if (inputLine.equals("\r")) {
                 break;
             } else {
@@ -67,14 +71,16 @@ public class ServerThread implements Runnable {
         return matcher.find() ? matcher : null;
     }
 
-    protected static String readLine(final InputStream inputStream) throws Exception {
+    protected String readLine() throws Exception {
         int c;
         String s = "";
-        while ((c = inputStream.read()) != -1) {
-            if (c == NEWLINE) {
-                break;
-            } else {
-                s += (char) c + "";
+        if (in.available() > 0) {
+            while ((c = in.read()) != -1) {
+                if (c == NEWLINE) {
+                    break;
+                } else {
+                    s += (char) c + "";
+                }
             }
         }
         return s;
@@ -90,11 +96,8 @@ public class ServerThread implements Runnable {
 
     private void processRequest() throws Exception {
         if (verbose) {
-            log("Request received from " + socket.getInetAddress());
+            log("Request received from " + peer);
         }
-
-        final OutputStream out = socket.getOutputStream();
-        final InputStream in = socket.getInputStream();
 
         final Response res = getResponseFromRequest(in);
 
@@ -106,24 +109,23 @@ public class ServerThread implements Runnable {
         System.out.println(res.toString());
         final byte[] bytes = res.body;
 
-        out.write(sent.getBytes());
-        if (bytes != null) {
-            for (final byte b : bytes) {
-                out.write((char) (b & 0xFF));
-            }
-        }
+        // out.write(sent.getBytes());
+        // if (bytes != null) {
+        // for (final byte b : bytes) {
+        // out.write((char) (b & 0xFF));
+        // }
+        // }
 
         if (verbose) {
-            log("Response sent to " + socket.getInetAddress());
+            log("Response sent to " + peer);
             System.out.println(sent + "\n");
         }
 
-        out.close();
-        in.close();
+        // in.close();
     }
 
     private Response getResponseFromRequest(final InputStream in) throws Exception {
-        final String httpLine = readLine(in);
+        final String httpLine = readLine();
         final Matcher matcher = ServerThread.getHeaderMatcher(httpLine);
         if (matcher == null) {
             // request isnt proper format, return with 400
@@ -250,7 +252,7 @@ public class ServerThread implements Runnable {
     }
 
     @Override
-    public void run() {
+    public void start() {
         try {
             processRequest();
         } catch (Exception e) {

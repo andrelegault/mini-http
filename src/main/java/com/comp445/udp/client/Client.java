@@ -18,7 +18,6 @@ import java.util.logging.Logger;
 
 import com.comp445.udp.Connection;
 import com.comp445.udp.ConnectionThread;
-import com.comp445.udp.ManagedPacket;
 import com.comp445.udp.Packet;
 import com.comp445.udp.Router;
 
@@ -84,7 +83,7 @@ public class Client {
     // Filename to output to
     protected String outputFilename;
 
-    private final Logger logger = Logger.getLogger(Client.class.getName());
+    private final Logger logger = Logger.getLogger("CLIENT");
 
     public static final ConcurrentHashMap<InetAddress, Connection> connections = new ConcurrentHashMap<InetAddress, Connection>();
     private Selector selector;
@@ -104,14 +103,13 @@ public class Client {
         try {
             parse();
             run();
-            this.selector = Selector.open();
         } catch (Exception e) {
             if (this.action == null || this.action.equalsIgnoreCase("help")) {
                 System.err.println(usageGeneral);
             } else {
                 formatter.printHelp("httpc " + this.action + " [arguments] URL", options);
             }
-            // e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
@@ -290,8 +288,9 @@ public class Client {
     private void establishConnection(final DatagramChannel channel) throws IOException {
         // SEND SYN
 
+        byte[] empty = new byte[0];
         final Packet syn = new Packet.Builder().setType(0).setSequenceNumber(0L).setPortNumber(this.target.getPort())
-                .setPeerAddress(InetAddress.getByName(this.target.getHost())).build();
+                .setPeerAddress(InetAddress.getByName(this.target.getHost())).setPayload(empty).build();
 
         Client.connections.putIfAbsent(syn.getPeerAddress(), new Connection());
 
@@ -310,27 +309,26 @@ public class Client {
         final Packet resp = Packet.fromBuffer(buf);
 
         // is valid response
-        if (resp.getSequenceNumber() == syn.getSequenceNumber() + 1 && resp.getType() == 2) {
+        if (resp.getSequenceNumber() == syn.getSequenceNumber() && resp.getType() == 2) {
             // SYNACK
             // server is listening
             final Connection conn = Client.connections.get(resp.getPeerAddress());
             conn.setConnected(true);
-            conn.getReceived().put(resp.getSequenceNumber(), new ManagedPacket(resp));
         }
 
         // SEND ACK
-        final Packet ack = new Packet.Builder().setType(1).setSequenceNumber(2L).setPortNumber(this.target.getPort())
-                .setPeerAddress(InetAddress.getByName(this.target.getHost())).build();
+        final Packet ack = new Packet.Builder().setType(1).setSequenceNumber(1L).setPortNumber(this.target.getPort())
+                .setPeerAddress(InetAddress.getByName(this.target.getHost())).setPayload(empty).build();
 
         channel.send(ack.toBuffer(), Router.ADDRESS);
     }
 
     private Packet[] segmentPackets(final ByteBuffer buf) throws UnknownHostException {
-        buf.flip();
         final int maxPayloadSize = Packet.MAX_LEN - Packet.MIN_LEN; // 1013
-        final int numPackets = (int) Math.ceil(buf.limit() / (maxPayloadSize));
+        final int numPackets = (int) Math.ceil((double) buf.capacity() / (maxPayloadSize));
         final Packet[] segmented = new Packet[numPackets];
         for (int i = 0; i < numPackets; i++) {
+            // use buf.remaining()
             final byte[] chunk = new byte[i == numPackets - 1 ? buf.capacity() - buf.position() : maxPayloadSize];
             buf.get(chunk);
             // Here we're using i+2 because the first 2 sequence nubmers are reserved for
@@ -342,21 +340,22 @@ public class Client {
     }
 
     private void connect() throws IOException {
+        this.selector = Selector.open();
         try (DatagramChannel channel = DatagramChannel.open()) {
             channel.configureBlocking(false);
-            channel.bind(Router.ADDRESS);
             channel.register(selector, OP_READ);
-
             establishConnection(channel);
+            logger.info("Connection established!");
 
             final Packet[] packets = segmentPackets(ByteBuffer.wrap(this.req.toBytes()).order(ByteOrder.BIG_ENDIAN));
+            selector.selectedKeys().clear();
             for (final Packet p : packets) {
-                if (this.verbose) {
-                    logger.info("Sending request!");
-                }
                 new ConnectionThread(channel, selector, p).start();
             }
 
+            for (;;) {
+
+            }
         }
     }
 

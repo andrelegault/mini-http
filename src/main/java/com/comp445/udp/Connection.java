@@ -1,7 +1,13 @@
 package com.comp445.udp;
 
+import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.comp445.udp.server.ServerThread;
 
 public class Connection {
     /**
@@ -14,22 +20,31 @@ public class Connection {
 
     private boolean connected = false;
 
-    /// Last managed packet received
-    protected ManagedPacket lastReceived;
+    /// Packet's that were sent to the peer.
+    public final Map<Long, Packet> sent = new HashMap<Long, Packet>();
 
-    /// ManagedPacket's that were sent to the peer.
-    protected final Map<Long, ManagedPacket> sent = new HashMap<Long, ManagedPacket>();
-
-    /// ManagedPacket's that were received from the peer.
-    protected final Map<Long, ManagedPacket> received = new HashMap<Long, ManagedPacket>();
+    /// Packet's that were received from the peer.
+    public final Map<Long, Packet> received = new HashMap<Long, Packet>();
 
     /// Bunch of packets that may or may not have been ack'ed
-    protected final ManagedPacket[] window = new ManagedPacket[WINDOW_SIZE];
+    protected final Packet[] window = new Packet[WINDOW_SIZE];
 
     // Current location of the window
-    protected final int current = 0;
+    public final int current = 0;
 
-    public Connection() {
+    public final ByteBuffer data = ByteBuffer.allocate(4096);
+
+    public PipedInputStream in;
+    public PipedOutputStream out;
+    public ServerThread handler;
+
+    public Connection() throws IOException {
+        out = new PipedOutputStream();
+        in = new PipedInputStream(out);
+    }
+
+    public void setHandler(ServerThread handler) {
+        this.handler = handler;
     }
 
     public boolean isConnected() {
@@ -38,13 +53,5 @@ public class Connection {
 
     public void setConnected(boolean connected) {
         this.connected = connected;
-    }
-
-    public Map<Long, ManagedPacket> getReceived() {
-        return this.received;
-    }
-
-    public Map<Long, ManagedPacket> getSent() {
-        return this.sent;
     }
 }
