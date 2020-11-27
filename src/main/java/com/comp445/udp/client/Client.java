@@ -6,7 +6,6 @@ import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -16,14 +15,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-import com.comp445.udp.Connection;
-import com.comp445.udp.ConnectionThread;
 import com.comp445.udp.Packet;
+import com.comp445.udp.PacketBuffer;
 import com.comp445.udp.Router;
+import com.comp445.udp.Window;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 
@@ -38,6 +36,15 @@ import org.apache.commons.cli.ParseException;
 import static java.nio.channels.SelectionKey.OP_READ;
 
 public class Client {
+    /**
+     * 
+     * Each sender needs a buffer of packets to get ack'ed (named `sent`). The
+     * receiver needs a bunch of packets to ack (named `received`).
+     * 
+     * Because the client is both a sender and a receiver it needs 2 lists of
+     * packets
+     */
+
     // General usage instructions
     private final String usageGeneral = "Usage:\n".concat("   httpc command [arguments] URL\n")
             .concat("The commands are:\n").concat("   get     executes a HTTP GET request and prints the response.\n")
@@ -85,12 +92,27 @@ public class Client {
 
     private final Logger logger = Logger.getLogger("CLIENT");
 
-    public static final ConcurrentHashMap<InetAddress, Connection> connections = new ConcurrentHashMap<InetAddress, Connection>();
     private Selector selector;
 
-    private static final int PORT = 41830;
-    private static final String HOSTNAME = "192.168.2.125";
-    public static final InetSocketAddress ADDRESS = new InetSocketAddress(HOSTNAME, PORT);
+    /**
+     * In TCP, every sender has a receiver.
+     * 
+     * Senders have a list of DATA packets that are to be acknowledged by the
+     * receiver. Receivers respond when those packets are successfully obtained by
+     * issuing ACK packets.
+     * 
+     * Because the `Client` class is both a sender and a receiver, it needs to
+     * support sending and receiving operations and thus needs 2 lists of packets.
+     * 
+     * Because the `Server` class is both a sender and a receiver, it needs to
+     * support sending and receiving operations and thus needs 2 lists of packets.
+     */
+
+    // Holds the packets that need to be ack'ed by the remote server.
+    public static volatile PacketBuffer sent;
+
+    // Holds the packets that need to be ack'ed by this instance.
+    public static volatile PacketBuffer received;
 
     /**
      * Constructor.
@@ -288,39 +310,38 @@ public class Client {
     private void establishConnection(final DatagramChannel channel) throws IOException {
         // SEND SYN
 
-        byte[] empty = new byte[0];
         final Packet syn = new Packet.Builder().setType(0).setSequenceNumber(0L).setPortNumber(this.target.getPort())
-                .setPeerAddress(InetAddress.getByName(this.target.getHost())).setPayload(empty).build();
+                .setPeerAddress(InetAddress.getByName(this.target.getHost())).build();
 
-        Client.connections.putIfAbsent(syn.getPeerAddress(), new Connection());
+        boolean synAckReceived = false;
+        while (!synAckReceived) {
 
-        // try to get a key but wait for a maximum of 5 seconds
-        final Set<SelectionKey> keys = selector.selectedKeys();
-        do {
-            channel.send(syn.toBuffer(), Router.ADDRESS);
-            selector.select(5000);
-        } while (keys.isEmpty());
+            // try to get a key but wait for a maximum of 5 seconds
+            final Set<SelectionKey> keys = selector.selectedKeys();
+            do {
+                channel.send(syn.toBuffer(), Router.ADDRESS);
+                selector.select(5000);
+            } while (keys.isEmpty());
+            // looks like we got a bite!! what is it??
 
-        // GET SYNACK
-        final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN);
-        channel.receive(buf);
-        buf.flip();
+            final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN);
+            channel.receive(buf);
+            buf.flip();
 
-        final Packet resp = Packet.fromBuffer(buf);
+            final Packet resp = Packet.fromBuffer(buf);
 
-        // is valid response
-        if (resp.getSequenceNumber() == syn.getSequenceNumber() && resp.getType() == 2) {
-            // SYNACK
-            // server is listening
-            final Connection conn = Client.connections.get(resp.getPeerAddress());
-            conn.setConnected(true);
+            // its a SYNACK!! yes!!
+            if (resp.getSequenceNumber() == syn.getSequenceNumber() && resp.getType() == 2) {
+                synAckReceived = true;
+            }
         }
 
-        // SEND ACK
+        // why am definitely ack'ing this!!
         final Packet ack = new Packet.Builder().setType(1).setSequenceNumber(1L).setPortNumber(this.target.getPort())
-                .setPeerAddress(InetAddress.getByName(this.target.getHost())).setPayload(empty).build();
+                .setPeerAddress(InetAddress.getByName(this.target.getHost())).build();
 
         channel.send(ack.toBuffer(), Router.ADDRESS);
+        selector.selectedKeys().clear();
     }
 
     private Packet[] segmentPackets(final ByteBuffer buf) throws UnknownHostException {
@@ -348,14 +369,62 @@ public class Client {
             logger.info("Connection established!");
 
             final Packet[] packets = segmentPackets(ByteBuffer.wrap(this.req.toBytes()).order(ByteOrder.BIG_ENDIAN));
-            selector.selectedKeys().clear();
-            for (final Packet p : packets) {
-                new ConnectionThread(channel, selector, p).start();
-            }
+            sent = new PacketBuffer(packets);
 
             for (;;) {
+                sendAllOutstanding(channel);
+                final Packet p = receivePacket(channel);
+                processPacket(p);
+                // do {
+                // sendPacket(packet, Router.ADDRESS);
+                // selector.select(5000);
+                // } while (keys.isEmpty());
+                // final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN);
+                // channel.receive(buf);
+                // buf.flip();
+
+                // final Packet resp = Packet.fromBuffer(buf);
+
+                // // is valid response
+                // if (resp.getSequenceNumber() == packet.getSequenceNumber()) {
+                // System.out.println("valid response!");
+                // // server is listening
+                // } else {
+                // System.out.println("Invalid response!");
+                // }
 
             }
+        }
+    }
+
+    private void sendAllOutstanding(final DatagramChannel channel) {
+        synchronized (Client.sent) {
+            // resending is taken care of by threads
+            while (Client.sent.lastSent < Client.sent.window.end()) {
+                Packet toSend = Client.sent.get();
+                new SenderPacketHandler(channel, selector, toSend).start();
+                Client.sent.lastSent++;
+            }
+        }
+    }
+
+    private Packet receivePacket(final DatagramChannel channel) throws IOException {
+        final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
+        channel.receive(buf);
+        buf.flip();
+        return Packet.fromBuffer(buf);
+    }
+
+    private void processPacket(final Packet p) {
+        final int position = (int) p.getSequenceNumber() - 2;
+        if (p.getType() != 1 || position < 0 || position >= Client.sent.getLength())
+            return;
+        synchronized (Client.sent) {
+            Client.sent.get(position).acked = true;
+            if (Client.sent.isWindowAcked())
+                Client.sent.window.incr(Window.SIZE);
+            else if (position == Client.sent.window.position())
+                Client.sent.window.incr();
         }
     }
 

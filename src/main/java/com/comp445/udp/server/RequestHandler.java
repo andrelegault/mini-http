@@ -19,7 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-public class ServerThread extends Thread {
+public class RequestHandler extends Thread {
     private static final Pattern headerPattern = Pattern.compile(
             "([Gg][Ee][Tt]|[Pp][Oo][Ss][Tt]) (\\/(\\w+\\/)*((\\w+\\.\\w+)|\\w+|(?!\\/))) [Hh][Tt][Tt][Pp]\\/1\\.[10]");
     private final boolean verbose;
@@ -28,7 +28,7 @@ public class ServerThread extends Thread {
     private final InetAddress peer;
     private final static int NEWLINE = 0x0A;
 
-    public ServerThread(final InetAddress peer, final InputStream in, final boolean verbose, final Path dataDir) {
+    public RequestHandler(final InetAddress peer, final InputStream in, final boolean verbose, final Path dataDir) {
         System.out.println("New serverThread created!!");
         this.verbose = verbose;
         this.dataDir = dataDir;
@@ -126,7 +126,7 @@ public class ServerThread extends Thread {
 
     private Response getResponseFromRequest(final InputStream in) throws Exception {
         final String httpLine = readLine();
-        final Matcher matcher = ServerThread.getHeaderMatcher(httpLine);
+        final Matcher matcher = RequestHandler.getHeaderMatcher(httpLine);
         if (matcher == null) {
             // request isnt proper format, return with 400
             return new Response(400);

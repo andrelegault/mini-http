@@ -13,6 +13,7 @@ import java.nio.ByteOrder;
 public class Packet {
     public static final int MIN_LEN = 11;
     public static final int MAX_LEN = 11 + 1013;
+    public boolean acked = false;
 
     /**
      * Types can be one of the following: SYN, ACK, SYN-ACK, or NAK.
@@ -79,7 +80,8 @@ public class Packet {
         buf.putInt((int) sequenceNumber);
         buf.put(peerAddress.getAddress());
         buf.putShort((short) peerPort);
-        buf.put(payload);
+        if (payload != null)
+            buf.put(payload);
     }
 
     /**

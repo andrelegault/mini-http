@@ -13,7 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
-import com.comp445.udp.Connection;
 import com.comp445.udp.Packet;
 import com.comp445.udp.Router;
 
@@ -25,10 +24,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 
 /**
  * This class represents the httpc server.
@@ -145,49 +140,35 @@ public class Server {
             logger.info("Listening on port: " + this.port + " | Data directory: " + dataDir.toString());
             final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
 
+            // for now the client can send and detect if there are any errors
+            // the server should also check if stuff is being detected
             for (;;) {
                 buf.clear();
-
-                // fills the buffer with the received request
                 channel.receive(buf);
-
-                // start from beginning of buffer
                 buf.flip();
 
-                // create the packet from the filled buffer
                 Packet packet = Packet.fromBuffer(buf);
-
                 logger.info("SERVER: " + packet.getType() + " received!");
 
-                // create connection if nonexistent
                 connections.putIfAbsent(packet.getPeerAddress(), new Connection());
-                // connection object for address x port obtained
                 final Connection conn = connections.get(packet.getPeerAddress());
 
                 if (conn.isConnected()) {
-                    // process request
-                    // TODO: use window n shit
-                    if (conn.current > packet.getSequenceNumber()) {
-                        Packet oldPacket = 
-                    }
-                    for(byte b : packet.getPayload()) {
-                        System.out.print((char)b);
+                    for (byte b : packet.getPayload()) {
                         conn.out.write(b);
                     }
                     if (conn.handler == null) {
-                        final ServerThread requestHandler = new ServerThread(packet.getPeerAddress(), conn.in, this.verbose, this.dataDir);
+                        final RequestHandler requestHandler = new RequestHandler(packet.getPeerAddress(), conn.in,
+                                this.verbose, this.dataDir);
                         conn.setHandler(requestHandler);
                         requestHandler.start();
                     }
 
-
-                    Packet resp = packet.toBuilder().setType(1).build();
+                    Packet resp = packet.toBuilder().setType(1).setPayload(null).build();
                     channel.send(resp.toBuffer(), Router.ADDRESS);
                 } else {
-                    // handle potential
                     if (packet.getType() == 0 && packet.getSequenceNumber() == 0) { // First SYN packet
-                        Packet resp = packet.toBuilder().setType(2)
-                                .setPayload("".getBytes()).build();
+                        Packet resp = packet.toBuilder().setType(2).setPayload("".getBytes()).build();
                         channel.send(resp.toBuffer(), Router.ADDRESS);
                     } else if (packet.getType() == 1 && packet.getSequenceNumber() == 1L) { // ACK
                         logger.info("Connection established!");
