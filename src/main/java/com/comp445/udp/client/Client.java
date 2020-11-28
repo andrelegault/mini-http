@@ -1,6 +1,8 @@
 package com.comp445.udp.client;
 
 import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
@@ -12,16 +14,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import com.comp445.udp.Packet;
 import com.comp445.udp.PacketBuffer;
+import com.comp445.udp.ResponseHandler;
 import com.comp445.udp.Router;
+import com.comp445.udp.TCPBase;
+import com.comp445.udp.TCPSender;
 import com.comp445.udp.Window;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 
@@ -114,6 +117,9 @@ public class Client {
     // Holds the packets that need to be ack'ed by this instance.
     public static volatile PacketBuffer received;
 
+    public PipedOutputStream out;
+    public PipedInputStream in;
+
     /**
      * Constructor.
      * 
@@ -122,7 +128,9 @@ public class Client {
      */
     public Client(final String[] args) {
         this.args = args;
+        out = new PipedOutputStream();
         try {
+            in = new PipedInputStream(out);
             parse();
             run();
         } catch (Exception e) {
@@ -315,7 +323,7 @@ public class Client {
 
         boolean synAckReceived = false;
         while (!synAckReceived) {
-
+            System.out.println("nope");
             // try to get a key but wait for a maximum of 5 seconds
             final Set<SelectionKey> keys = selector.selectedKeys();
             do {
@@ -331,33 +339,16 @@ public class Client {
             final Packet resp = Packet.fromBuffer(buf);
 
             // its a SYNACK!! yes!!
-            if (resp.getSequenceNumber() == syn.getSequenceNumber() && resp.getType() == 2) {
+            if (resp.getSequenceNumber() == syn.getSequenceNumber() + 1 && resp.getType() == 2) {
                 synAckReceived = true;
             }
         }
 
         // why am definitely ack'ing this!!
-        final Packet ack = new Packet.Builder().setType(1).setSequenceNumber(1L).setPortNumber(this.target.getPort())
-                .setPeerAddress(InetAddress.getByName(this.target.getHost())).build();
+        final Packet ack = syn.toBuilder().setType(1).setSequenceNumber(2L).build();
 
         channel.send(ack.toBuffer(), Router.ADDRESS);
         selector.selectedKeys().clear();
-    }
-
-    private Packet[] segmentPackets(final ByteBuffer buf) throws UnknownHostException {
-        final int maxPayloadSize = Packet.MAX_LEN - Packet.MIN_LEN; // 1013
-        final int numPackets = (int) Math.ceil((double) buf.capacity() / (maxPayloadSize));
-        final Packet[] segmented = new Packet[numPackets];
-        for (int i = 0; i < numPackets; i++) {
-            // use buf.remaining()
-            final byte[] chunk = new byte[i == numPackets - 1 ? buf.capacity() - buf.position() : maxPayloadSize];
-            buf.get(chunk);
-            // Here we're using i+2 because the first 2 sequence nubmers are reserved for
-            // the handshake
-            segmented[i] = new Packet.Builder().setType(4).setSequenceNumber(i + 2).setPortNumber(this.target.getPort())
-                    .setPeerAddress(InetAddress.getByName(this.target.getHost())).setPayload(chunk).build();
-        }
-        return segmented;
     }
 
     private void connect() throws IOException {
@@ -368,13 +359,15 @@ public class Client {
             establishConnection(channel);
             logger.info("Connection established!");
 
-            final Packet[] packets = segmentPackets(ByteBuffer.wrap(this.req.toBytes()).order(ByteOrder.BIG_ENDIAN));
+            final Packet[] packets = Packet.toArray(ByteBuffer.wrap(this.req.toBytes()).order(ByteOrder.BIG_ENDIAN),
+                    this.target.getHost(), this.target.getPort());
             sent = new PacketBuffer(packets);
 
             for (;;) {
-                sendAllOutstanding(channel);
+                TCPSender.sendOutstanding(channel, selector, Client.sent);
                 final Packet p = receivePacket(channel);
-                processPacket(p);
+                System.out.println(new String(p.getPayload()));
+                TCPBase.process(Client.sent, p, out, true);
                 // do {
                 // sendPacket(packet, Router.ADDRESS);
                 // selector.select(5000);
@@ -397,35 +390,13 @@ public class Client {
         }
     }
 
-    private void sendAllOutstanding(final DatagramChannel channel) {
-        synchronized (Client.sent) {
-            // resending is taken care of by threads
-            while (Client.sent.lastSent < Client.sent.window.end()) {
-                Packet toSend = Client.sent.get();
-                new SenderPacketHandler(channel, selector, toSend).start();
-                Client.sent.lastSent++;
-            }
-        }
-    }
-
     private Packet receivePacket(final DatagramChannel channel) throws IOException {
         final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
+        selector.select();
         channel.receive(buf);
-        buf.flip();
+        System.out.println("Received packet!");
+        // buf.flip();
         return Packet.fromBuffer(buf);
-    }
-
-    private void processPacket(final Packet p) {
-        final int position = (int) p.getSequenceNumber() - 2;
-        if (p.getType() != 1 || position < 0 || position >= Client.sent.getLength())
-            return;
-        synchronized (Client.sent) {
-            Client.sent.get(position).acked = true;
-            if (Client.sent.isWindowAcked())
-                Client.sent.window.incr(Window.SIZE);
-            else if (position == Client.sent.window.position())
-                Client.sent.window.incr();
-        }
     }
 
     private void run() throws Exception {

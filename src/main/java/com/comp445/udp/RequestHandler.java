@@ -1,9 +1,7 @@
-package com.comp445.udp.server;
+package com.comp445.udp;
 
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.file.Files;
@@ -18,6 +16,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
+import com.comp445.udp.server.Response;
+import com.comp445.udp.server.Server;
 
 public class RequestHandler extends Thread {
     private static final Pattern headerPattern = Pattern.compile(
@@ -74,13 +75,11 @@ public class RequestHandler extends Thread {
     protected String readLine() throws Exception {
         int c;
         String s = "";
-        if (in.available() > 0) {
-            while ((c = in.read()) != -1) {
-                if (c == NEWLINE) {
-                    break;
-                } else {
-                    s += (char) c + "";
-                }
+        while ((c = in.read()) != -1) {
+            if (c == NEWLINE) {
+                break;
+            } else {
+                s += (char) c + "";
             }
         }
         return s;

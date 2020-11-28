@@ -3,6 +3,7 @@ package com.comp445.udp;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -14,6 +15,8 @@ public class Packet {
     public static final int MIN_LEN = 11;
     public static final int MAX_LEN = 11 + 1013;
     public boolean acked = false;
+    public boolean consumed = false;
+    public boolean sent = false;
 
     /**
      * Types can be one of the following: SYN, ACK, SYN-ACK, or NAK.
@@ -146,6 +149,28 @@ public class Packet {
         return fromBuffer(buf);
     }
 
+    public static Packet buildAck(Packet p) {
+        long seq = p.getSequenceNumber();
+        return p.toBuilder().setType(1).setSequenceNumber(seq + 1).setPayload(null).build();
+    }
+
+    public static Packet[] toArray(ByteBuffer buf, String host, int port) throws UnknownHostException {
+        final int maxPayloadSize = Packet.MAX_LEN - Packet.MIN_LEN; // 1013
+        final int numPackets = (int) Math.ceil((double) buf.capacity() / (maxPayloadSize));
+        final Packet[] segmented = new Packet[numPackets];
+        for (int i = 0; i < numPackets; i++) {
+            final byte[] chunk = new byte[Math.min(maxPayloadSize, buf.remaining())];
+            // final byte[] chunk = new byte[i == numPackets - 1 ? buf.capacity() -
+            // buf.position() : maxPayloadSize];
+            buf.get(chunk);
+            // Here we're using i+1 because the first 1 sequence nubmers are reserved for
+            // the handshake
+            segmented[i] = new Packet.Builder().setType(4).setSequenceNumber(i + 1).setPortNumber(port)
+                    .setPeerAddress(InetAddress.getByName(host)).setPayload(chunk).build();
+        }
+        return segmented;
+    }
+
     @Override
     public String toString() {
         return String.format("#%d peer=%s:%d, size=%d", sequenceNumber, peerAddress, peerPort, payload.length);
@@ -186,6 +211,10 @@ public class Packet {
         public Packet build() {
             return new Packet(type, sequenceNumber, peerAddress, portNumber, payload);
         }
+    }
+
+    public void process(final Packet p) {
+
     }
 
 }

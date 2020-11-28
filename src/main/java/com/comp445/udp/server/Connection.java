@@ -5,6 +5,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
 import com.comp445.udp.PacketBuffer;
+import com.comp445.udp.RequestHandler;
 
 public class Connection {
     /**
@@ -12,16 +13,15 @@ public class Connection {
      * is the class representing this state.
      */
 
-
     private boolean connected = false;
 
     /// Packet's that were received from the peer.
 
     // Holds the packets that need to be ack'ed by the remote client.
-    public static volatile PacketBuffer sent;
+    public PacketBuffer sent;
 
     // Holds the packets that need to be ack'ed by this instance.
-    public static volatile PacketBuffer received;
+    public PacketBuffer received = new PacketBuffer();
 
     public PipedInputStream in;
     public PipedOutputStream out;

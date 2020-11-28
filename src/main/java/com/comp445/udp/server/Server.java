@@ -2,7 +2,6 @@ package com.comp445.udp.server;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
@@ -14,7 +13,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import com.comp445.udp.Packet;
+import com.comp445.udp.RequestHandler;
 import com.comp445.udp.Router;
+import com.comp445.udp.TCPBase;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -22,8 +23,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * This class represents the httpc server.
@@ -57,10 +56,10 @@ public class Server {
     // Path to desired endpoint.
     public Path dataDir = Paths.get(cwd, "/DATA");
 
-    protected static volatile ConcurrentHashMap<Path, AtomicInteger> locks = new ConcurrentHashMap<Path, AtomicInteger>();
+    public static volatile ConcurrentHashMap<Path, AtomicInteger> locks = new ConcurrentHashMap<Path, AtomicInteger>();
 
     /// Holds the connection for each socket address
-    protected static volatile ConcurrentHashMap<InetAddress, Connection> connections = new ConcurrentHashMap<InetAddress, Connection>();
+    public static volatile ConcurrentHashMap<InetAddress, Connection> connections = new ConcurrentHashMap<InetAddress, Connection>();
 
     private static final Logger logger = Logger.getLogger(Server.class.getName());
 
@@ -140,37 +139,48 @@ public class Server {
             logger.info("Listening on port: " + this.port + " | Data directory: " + dataDir.toString());
             final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
 
-            // for now the client can send and detect if there are any errors
-            // the server should also check if stuff is being detected
             for (;;) {
                 buf.clear();
                 channel.receive(buf);
                 buf.flip();
 
+                // got a packet
                 Packet packet = Packet.fromBuffer(buf);
-                logger.info("SERVER: " + packet.getType() + " received!");
+                logger.info("SERVER: >>" + packet.getType() + "<< received!");
 
                 connections.putIfAbsent(packet.getPeerAddress(), new Connection());
                 final Connection conn = connections.get(packet.getPeerAddress());
 
                 if (conn.isConnected()) {
-                    for (byte b : packet.getPayload()) {
-                        conn.out.write(b);
-                    }
-                    if (conn.handler == null) {
-                        final RequestHandler requestHandler = new RequestHandler(packet.getPeerAddress(), conn.in,
-                                this.verbose, this.dataDir);
-                        conn.setHandler(requestHandler);
-                        requestHandler.start();
+                    // for (byte b : packet.getPayload())
+                    //     conn.out.write(b);
+
+                    if (packet.getType() == 1) { // ACK
+                        TCPBase.process(conn.sent, packet, null, false);
+                    } else if (packet.getType() == 4) { // DATA
+                        TCPBase.process(conn.received, packet, conn.out, false);
+                        if (packet.getPayload() == null)
+                            continue;
+
+                        // initialized thread handling DATA request
+                        if (conn.handler == null) {
+                            if (conn.in.available() == 0) continue;
+                            conn.setHandler(
+                                    new RequestHandler(packet.getPeerAddress(), conn.in, this.verbose, this.dataDir));
+                            conn.handler.start();
+                        } else
+                            conn.handler.notify();
+                        System.out.println("got out!");
                     }
 
-                    Packet resp = packet.toBuilder().setType(1).setPayload(null).build();
+                    Packet resp = Packet.buildAck(packet);
+                    System.out.println("Should send data");
                     channel.send(resp.toBuffer(), Router.ADDRESS);
                 } else {
-                    if (packet.getType() == 0 && packet.getSequenceNumber() == 0) { // First SYN packet
-                        Packet resp = packet.toBuilder().setType(2).setPayload("".getBytes()).build();
+                    if (packet.getType() == 0 && packet.getSequenceNumber() == 0L) { // First SYN packet
+                        Packet resp = packet.toBuilder().setSequenceNumber(1L).setType(2).build();
                         channel.send(resp.toBuffer(), Router.ADDRESS);
-                    } else if (packet.getType() == 1 && packet.getSequenceNumber() == 1L) { // ACK
+                    } else if (packet.getType() == 1 && packet.getSequenceNumber() == 2L) { // ACK
                         logger.info("Connection established!");
                         conn.setConnected(true);
                     }
