@@ -75,12 +75,14 @@ public class RequestHandler extends Thread {
     protected String readLine() throws Exception {
         int c;
         String s = "";
+        // WE SHOULD PAUSE HERE
         while ((c = in.read()) != -1) {
             if (c == NEWLINE) {
                 break;
             } else {
                 s += (char) c + "";
             }
+            if (in.available() == 0) wait();
         }
         return s;
     }
