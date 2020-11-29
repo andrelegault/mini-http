@@ -25,14 +25,14 @@ public class Connection {
 
     public PipedInputStream in;
     public PipedOutputStream out;
-    public RequestHandler handler;
+    public Thread handler;
 
     public Connection() throws IOException {
         out = new PipedOutputStream();
         in = new PipedInputStream(out);
     }
 
-    public void setHandler(RequestHandler handler) {
+    public void setHandler(Thread handler) {
         this.handler = handler;
     }
 

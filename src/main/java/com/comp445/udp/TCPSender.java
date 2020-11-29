@@ -28,7 +28,7 @@ public class TCPSender {
         final Packet[] toSend = TCPSender.getReadyPackets(buffer);
         for (Packet p : toSend) {
             buffer.last.incrementAndGet();
-            new ResponseHandler(channel, selector, buffer, p).start();
+            new Thread(new ResponseHandler(channel, selector, buffer, p)).start();
         }
     }
 

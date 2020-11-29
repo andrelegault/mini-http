@@ -351,7 +351,7 @@ public class Client {
         // selector.selectedKeys().clear();
     }
 
-    private void connect() throws IOException {
+    private void connect() throws IOException, InterruptedException {
         try (DatagramChannel channel = DatagramChannel.open()) {
             channel.configureBlocking(false);
             this.selector = Selector.open();

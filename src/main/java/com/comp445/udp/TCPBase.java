@@ -1,7 +1,6 @@
 package com.comp445.udp;
 
 import java.io.IOException;
-import java.io.PipedOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.Selector;
@@ -45,8 +44,8 @@ public class TCPBase {
                 for (int i = buffer.window.start(); i < buffer.window.end(); i++) {
                     try {
                         byte[] data = conn.received.get(i).getPayload();
-                        for (byte b : data)
-                            System.out.write(b);
+                        // for (byte b : data)
+                        //     System.out.write(b);
                         conn.out.write(data);
                     } catch (IOException e) {
                         // TODO Auto-generated catch block
