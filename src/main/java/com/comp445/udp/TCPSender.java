@@ -36,11 +36,21 @@ public class TCPSender {
     // multi-threaded)
     //
     // basically sets the acked attribute of a packet.
-    public static void process(PacketBuffer buffer, long relPosition) {
-        // System.out.println("sent[" + relPosition + "].acked is now true");
-        if (buffer.get(relPosition) == null) {
-            System.out.println(relPosition);
-        }
+    public static void process(PacketBuffer buffer, Packet p) {
+        long relPosition = p.getSequenceNumber() - 1;
+        System.out.println("sent[" + relPosition + "].acked is now true");
+        if (relPosition < 0 || relPosition > buffer.getLength() - 1)
+            return;
         buffer.get(relPosition).acked = true;
+        if (buffer.isWindowAcked())
+            buffer.window.incr(Window.SIZE); // not sure about that
+        else if (relPosition == buffer.window.start()) {
+            for (int i = buffer.window.start(); i <= buffer.window.end(); i++) {
+                Packet current = buffer.get(i);
+                if (current == null || !current.acked)
+                    break;
+                buffer.window.incr(); // move window by 1
+            }
+        }
     }
 }
