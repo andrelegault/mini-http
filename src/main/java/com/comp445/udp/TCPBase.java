@@ -18,7 +18,9 @@ public class TCPBase {
         selector.select();
         channel.receive(buf);
         buf.flip();
-        return Packet.fromBuffer(buf);
+        final Packet p = Packet.fromBuffer(buf);
+        buf.flip();
+        return p;
     }
 
     public static void process(Connection conn, Packet p) throws IOException {
