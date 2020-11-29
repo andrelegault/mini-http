@@ -1,8 +1,6 @@
 package com.comp445.udp.client;
 
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
@@ -22,12 +20,10 @@ import com.comp445.udp.ResponseHandler;
 import com.comp445.udp.Router;
 import com.comp445.udp.TCPBase;
 import com.comp445.udp.TCPSender;
-import com.comp445.udp.Window;
 import com.comp445.udp.server.Connection;
 
 import java.net.InetAddress;
 import java.net.URL;
-import java.net.UnknownHostException;
 
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -37,7 +33,6 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.nio.channels.SelectionKey.OP_READ;
 
 public class Client {
@@ -376,9 +371,10 @@ public class Client {
                     System.out.println("Sending: " + ack);
                     channel.send(ack.toBuffer(), Router.ADDRESS);
                 }
-                while(conn.in.available() > 0 && (c = conn.in.read()) != -1) {
-                    System.out.write((char)c);
-                    if (conn.in.available() == 0) break;
+                while (conn.in.available() > 0 && (c = conn.in.read()) != -1) {
+                    System.out.write((char) c);
+                    if (conn.in.available() == 0)
+                        break;
                 }
             }
         }

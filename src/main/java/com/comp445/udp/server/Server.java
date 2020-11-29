@@ -13,10 +13,6 @@ import java.nio.file.Paths;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 import com.comp445.udp.Packet;
 import com.comp445.udp.PacketBuffer;
@@ -239,7 +235,8 @@ public class Server {
             buf.clear();
             // theres an overflow here, the channel contains more than a single request
             channel.receive(buf);
-            if (buf.remaining() == Packet.MAX_LEN) continue;
+            if (buf.remaining() == Packet.MAX_LEN)
+                continue;
 
             buf.flip();
             ackOrData = Packet.fromBuffer(buf);

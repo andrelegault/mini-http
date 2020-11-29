@@ -36,7 +36,8 @@ public class PacketBuffer {
     // means the whole window is acked
     public boolean isWindowAcked() {
         for (int i = window.position(); i < window.end() && i < buffer.length; i++) {
-            if (get(i) == null || !get(i).acked) return false;
+            if (get(i) == null || !get(i).acked)
+                return false;
         }
         return true;
     }

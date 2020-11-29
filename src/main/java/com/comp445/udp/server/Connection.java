@@ -5,7 +5,6 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
 import com.comp445.udp.PacketBuffer;
-import com.comp445.udp.RequestHandler;
 
 public class Connection {
     /**
