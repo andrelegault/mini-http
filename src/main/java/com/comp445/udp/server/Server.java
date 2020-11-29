@@ -147,6 +147,7 @@ public class Server {
     }
 
     private void run() {
+        // TODO: when everything is acked (in sent), close the connection via FIN...
         try (DatagramChannel channel = DatagramChannel.open()) {
             channel.configureBlocking(false);
             selector = Selector.open();

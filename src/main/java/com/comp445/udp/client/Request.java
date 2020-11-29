@@ -58,7 +58,8 @@ public abstract class Request {
 
     public byte[] toBytes() {
         final byte[] headerBytes = outFmt.toString().getBytes();
-        final ByteBuffer buf = ByteBuffer.allocate(headerBytes.length + (data != null ? data.length : 0)).order(ByteOrder.BIG_ENDIAN);
+        final ByteBuffer buf = ByteBuffer.allocate(headerBytes.length + (data != null ? data.length : 0))
+                .order(ByteOrder.BIG_ENDIAN);
         buf.put(ByteBuffer.wrap(headerBytes));
         if (data != null)
             buf.put(ByteBuffer.wrap(data));
@@ -92,8 +93,8 @@ public abstract class Request {
             }
         }
         if (this instanceof PostRequest) {
-            outFmt.format("Content-Length: %d\r%n", data == null ? 0 : data.length);
             outFmt.format("Content-Type: text/plain\r%n");
+            outFmt.format("Content-Length: %d\r%n", data == null ? 0 : data.length);
         }
         outFmt.format("\r%n");
     }
