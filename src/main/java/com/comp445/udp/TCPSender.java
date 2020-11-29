@@ -38,6 +38,9 @@ public class TCPSender {
     // basically sets the acked attribute of a packet.
     public static void process(PacketBuffer buffer, long relPosition) {
         // System.out.println("sent[" + relPosition + "].acked is now true");
+        if (buffer.get(relPosition) == null) {
+            System.out.println(relPosition);
+        }
         buffer.get(relPosition).acked = true;
     }
 }

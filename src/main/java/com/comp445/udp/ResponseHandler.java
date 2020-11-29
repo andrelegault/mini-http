@@ -10,7 +10,7 @@ public class ResponseHandler extends Thread {
 
     // maybe make a counter that checks how many times something was sent, to not
     // send stuff forever.
-    public static final int WAIT_TIME = 1000;
+    public static final int WAIT_TIME = 500;
     final DatagramChannel channel;
     final Selector selector;
     final Packet packet;

@@ -175,7 +175,8 @@ public class Server {
                         conn.setConnected(true);
                         conn.sent = new PacketBuffer();
                         connections.put(key, conn);
-                        if (packet.getType() == 1) continue;
+                        if (packet.getType() == 1)
+                            continue;
                         // there was an error where we would mistake handshake ACK for a legitimate ACK.
                     }
                 }
@@ -192,9 +193,9 @@ public class Server {
                         if (conn.handler == null) {
                             if (conn.in.available() == 0)
                                 continue;
-                            // conn.setHandler(
-                            new RequestHandler(channel, selector, key, conn.in, this.verbose, this.dataDir).start();
-                            // conn.handler.start();
+                            conn.setHandler(
+                                    new RequestHandler(channel, selector, key, conn.in, this.verbose, this.dataDir));
+                            conn.handler.start();
                         }
                         // else {
                         // synchronized (conn.handler) {

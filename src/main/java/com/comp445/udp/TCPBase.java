@@ -24,7 +24,6 @@ public class TCPBase {
     public static void process(Connection conn, Packet p) throws IOException {
         PacketBuffer buffer;
         final int type = p.getType();
-        // apparently this shouldnt be decreased for clients????????
         if (type == 1) { // ACK
             buffer = conn.sent;
             long relPosition = p.getSequenceNumber() - 1;
