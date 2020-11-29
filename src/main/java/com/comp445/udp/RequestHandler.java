@@ -241,7 +241,8 @@ public class RequestHandler extends Thread {
                     // doesnt exist or is not writable
                     final Path parentPath = path.getParent();
                     try {
-                        Files.createDirectories(parentPath);
+                        if (!Files.exists(parentPath))
+                            Files.createDirectories(parentPath);
                         writeUsingFileChannel(path, body);
                         return new Response(201);
                     } catch (Exception e) {
