@@ -365,6 +365,7 @@ public class Client {
 
             final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN);
 
+            int c;
             for (;;) {
                 TCPSender.sendOutstanding(channel, selector, conn.sent);
                 final Packet p = TCPBase.receivePacket(channel, selector, buf);
@@ -374,6 +375,10 @@ public class Client {
                     Packet ack = Packet.buildAck(p);
                     System.out.println("Sending: " + ack);
                     channel.send(ack.toBuffer(), Router.ADDRESS);
+                }
+                while(conn.in.available() > 0 && (c = conn.in.read()) != -1) {
+                    System.out.write((char)c);
+                    if (conn.in.available() == 0) break;
                 }
             }
         }
