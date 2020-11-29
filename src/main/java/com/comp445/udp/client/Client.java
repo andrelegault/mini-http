@@ -97,8 +97,7 @@ public class Client {
 
     private final Logger logger = Logger.getLogger("CLIENT");
 
-    private Selector readLock;
-    private Selector writeLock;
+    private Selector selector;
 
     public static Connection conn;
 
@@ -324,11 +323,11 @@ public class Client {
         boolean synAckReceived = false;
         while (!synAckReceived) {
             // try to get a key but wait for a maximum of 5 seconds
-            final Set<SelectionKey> keys = readLock.selectedKeys();
+            final Set<SelectionKey> keys = selector.selectedKeys();
             do {
                 System.out.println("Sending: " + syn);
                 channel.send(syn.toBuffer(), Router.ADDRESS);
-                readLock.select(5000);
+                selector.select(5000);
             } while (keys.isEmpty());
             // looks like we got a bite!! what is it??
             buf.clear();
@@ -336,6 +335,7 @@ public class Client {
             buf.flip();
 
             final Packet resp = Packet.fromBuffer(buf);
+            System.out.println("RECEIVED: " + resp);
 
             // its a SYNACK!! yes!!
             if (resp.getSequenceNumber() == syn.getSequenceNumber() + 1 && resp.getType() == 2) {
@@ -348,17 +348,14 @@ public class Client {
 
         System.out.println("Sending: " + ack);
         channel.send(ack.toBuffer(), Router.ADDRESS);
-        readLock.selectedKeys().clear();
+        // selector.selectedKeys().clear();
     }
 
     private void connect() throws IOException {
-        this.readLock = Selector.open();
-        this.writeLock = Selector.open();
         try (DatagramChannel channel = DatagramChannel.open()) {
             channel.configureBlocking(false);
-            channel.register(readLock, OP_READ);
-            channel.register(writeLock, OP_WRITE);
-
+            this.selector = Selector.open();
+            channel.register(selector, OP_READ);
             establishConnection(channel);
             logger.info("Connection established!");
 
@@ -369,10 +366,10 @@ public class Client {
             final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN);
 
             for (;;) {
-                TCPSender.sendOutstanding(channel, readLock, conn.sent);
-                final Packet p = receivePacket(buf, channel);
+                TCPSender.sendOutstanding(channel, selector, conn.sent);
+                final Packet p = TCPBase.receivePacket(channel, selector, buf);
                 System.out.println("Received: " + p);
-                TCPBase.process(conn, p, conn.out);
+                TCPBase.process(conn, p);
                 if (p.getType() == 4) {
                     Packet ack = Packet.buildAck(p);
                     System.out.println("Sending: " + ack);
@@ -380,14 +377,6 @@ public class Client {
                 }
             }
         }
-    }
-
-    private Packet receivePacket(final ByteBuffer buf, final DatagramChannel channel) throws IOException {
-        buf.clear();
-        readLock.select();
-        channel.receive(buf);
-        buf.flip();
-        return Packet.fromBuffer(buf);
     }
 
     private void run() throws Exception {

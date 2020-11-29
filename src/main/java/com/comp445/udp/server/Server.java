@@ -31,6 +31,8 @@ import org.apache.commons.cli.Options;
 
 import static java.nio.channels.SelectionKey.OP_READ;
 
+import java.io.IOException;
+
 /**
  * This class represents the httpc server.
  *
@@ -67,6 +69,8 @@ public class Server {
 
     /// Holds the connection for each socket address
     public static volatile ConcurrentHashMap<InetSocketAddress, Connection> connections = new ConcurrentHashMap<InetSocketAddress, Connection>();
+
+    private Selector selector;
 
     /**
      * @param args Arguments.
@@ -145,44 +149,37 @@ public class Server {
 
     private void run() {
         try (DatagramChannel channel = DatagramChannel.open()) {
-            Selector selector = Selector.open();
             channel.configureBlocking(false);
-            channel.register(selector, OP_READ);
+            selector = Selector.open();
             channel.bind(new InetSocketAddress(this.port));
+            channel.register(selector, OP_READ);
             log("Listening on port: " + this.port + " | Data directory: " + dataDir.toString());
+
             final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
 
             for (;;) {
-                buf.clear();
-                selector.select();
-                channel.receive(buf);
-                buf.flip();
 
-                // got a packet
-                final Packet packet = Packet.fromBuffer(buf);
+                final Packet packet = TCPBase.receivePacket(channel, selector, buf);
                 log("RECEIVED: " + packet);
-
                 final InetSocketAddress key = getClientSocketAddress(packet.getPeerAddress(), packet.getPeerPort());
 
-                if (connections.get(key) == null) {
-                    Connection conn = new Connection();
-                    conn.sent = new PacketBuffer();
-                    connections.put(key, conn);
+                Connection conn = connections.get(key);
+                if (conn == null) {
+                    final boolean connected = establishConnection(channel, buf, packet);
+                    if (connected) {
+                        conn = new Connection();
+                        conn.setConnected(true);
+                        conn.sent = new PacketBuffer();
+                        connections.put(key, conn);
+                    }
                 }
 
-                final Connection conn = connections.get(key);
-
                 if (conn.isConnected()) {
-                    if (packet.getType() == 1) { // ACK
-                        TCPBase.process(conn, packet, null);
-                    } else if (packet.getType() == 4) { // DATA
-                        if (packet.getPayload() == null)
-                            continue;
+                    TCPBase.process(conn, packet);
+                    if (packet.getType() == 4) { // DATA
                         final Packet resp = Packet.buildAck(packet);
                         log("Sending " + resp);
                         channel.send(resp.toBuffer(), Router.ADDRESS);
-
-                        TCPBase.process(conn, packet, conn.out);
 
                         // have NOT yet tested for multiple-packet requests
                         // initialized thread handling DATA request
@@ -190,23 +187,14 @@ public class Server {
                             if (conn.in.available() == 0)
                                 continue;
                             // conn.setHandler(
-                                    new RequestHandler(channel, selector, key, conn.in, this.verbose, this.dataDir).start();
+                            new RequestHandler(channel, selector, key, conn.in, this.verbose, this.dataDir).start();
                             // conn.handler.start();
                         }
-                        //  else {
-                        //     synchronized (conn.handler) {
-                        //         conn.handler.notify();
-                        //     }
+                        // else {
+                        // synchronized (conn.handler) {
+                        // conn.handler.notify();
                         // }
-                    }
-                } else {
-                    if (packet.getType() == 0 && packet.getSequenceNumber() == 0L) { // First SYN packet
-                        final Packet resp = packet.toBuilder().setSequenceNumber(1L).setType(2).build();
-                        System.out.println("Sending " + resp);
-                        channel.send(resp.toBuffer(), Router.ADDRESS);
-                    } else if (packet.getType() == 1 && packet.getSequenceNumber() == 1L) { // ACK
-                        log("Connection established!");
-                        conn.setConnected(true);
+                        // }
                     }
                 }
             }
@@ -215,8 +203,25 @@ public class Server {
         }
     }
 
-    private void establishConnection(final DatagramChannel channel) {
+    private boolean establishConnection(final DatagramChannel channel, final ByteBuffer buf, Packet syn)
+            throws IOException {
 
+        if (syn.getType() != 0 && syn.getSequenceNumber() != 0L)
+            return false;
+
+        final Packet synAck = syn.toBuilder().setSequenceNumber(1L).setType(2).build();
+
+        Packet ack;
+        do {
+            channel.send(synAck.toBuffer(), Router.ADDRESS);
+            this.selector.select(5000);
+            buf.clear();
+            channel.receive(buf);
+            buf.flip();
+            ack = Packet.fromBuffer(buf);
+        } while (ack.getType() != 1 && ack.getSequenceNumber() != 1L);
+
+        return true;
     }
 
     private void log(final String output) {

@@ -37,8 +37,8 @@ public class ResponseHandler extends Thread {
                 System.out.println("Sending: " + packet);
                 channel.send(packet.toBuffer(), Router.ADDRESS);
                 packet.sent = true;
-                Thread.sleep(5000);
-                // selector.select(100);
+                // Thread.sleep(5000);
+                selector.select(5000);
                 // synchronized(this) {
                 //     wait();
                 // }
