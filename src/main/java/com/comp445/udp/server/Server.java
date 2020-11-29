@@ -169,11 +169,14 @@ public class Server {
                 Connection conn = connections.get(key);
                 if (conn == null) {
                     packet = establishConnection(channel, buf, packet);
+                    buf.flip();
                     if (packet != null) {
                         conn = new Connection();
                         conn.setConnected(true);
                         conn.sent = new PacketBuffer();
                         connections.put(key, conn);
+                        if (packet.getType() == 1) continue;
+                        // there was an error where we would mistake handshake ACK for a legitimate ACK.
                     }
                 }
 
