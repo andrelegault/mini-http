@@ -233,6 +233,7 @@ public class Server {
             // looks like we got a bite!! what is it??
             buf.clear();
             channel.receive(buf);
+            if (buf.remaining() == Packet.MAX_LEN) continue;
 
             ackOrData = Packet.fromBuffer(buf);
             System.out.println("RECEIVED: " + ackOrData);
