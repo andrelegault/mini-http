@@ -229,7 +229,6 @@ public class Server {
             // looks like we got a bite!! what is it??
             buf.clear();
             channel.receive(buf);
-            buf.flip();
 
             ackOrData = Packet.fromBuffer(buf);
             System.out.println("RECEIVED: " + ackOrData);
