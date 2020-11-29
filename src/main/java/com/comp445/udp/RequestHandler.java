@@ -92,8 +92,11 @@ public class RequestHandler extends Thread {
             } else {
                 s += (char) c + "";
             }
-            if (in.available() == 0)
-                wait();
+            if (in.available() == 0) {
+                synchronized (this) {
+                    wait();
+                }
+            }
         }
         return s;
     }
@@ -122,8 +125,8 @@ public class RequestHandler extends Thread {
         final Connection conn = Server.connections.get(peer);
         assert (conn.isConnected());
         System.out.println("Launch response handler");
-        for(final Packet p : packets)
-            new ResponseHandler(this.channel, this.selector, conn.sent, p).start(); 
+        for (final Packet p : packets)
+            new ResponseHandler(this.channel, this.selector, conn.sent, p).start();
         // in.close();
     }
 
