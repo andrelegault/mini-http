@@ -24,7 +24,8 @@ public class TCPSender {
         return toSend.toArray(new Packet[toSend.size()]);
     }
 
-    public static void sendOutstanding(DatagramChannel channel, Selector selector, PacketBuffer buffer) {
+    public static void sendOutstanding(DatagramChannel channel, Selector selector, PacketBuffer buffer)
+            throws InterruptedException {
         final Packet[] toSend = TCPSender.getReadyPackets(buffer);
         for (Packet p : toSend) {
             buffer.last.incrementAndGet();
@@ -41,15 +42,19 @@ public class TCPSender {
         System.out.println("sent[" + relPosition + "].acked is now true");
         if (relPosition < 0 || relPosition > buffer.getLength() - 1)
             return;
-        buffer.get(relPosition).acked = true;
-        if (buffer.isWindowAcked())
-            buffer.window.incr(Window.SIZE); // not sure about that
-        else if (relPosition == buffer.window.start()) {
-            for (int i = buffer.window.start(); i <= buffer.window.end(); i++) {
-                Packet current = buffer.get(i);
-                if (current == null || !current.acked)
-                    break;
-                buffer.window.incr(); // move window by 1
+        synchronized (buffer.get(relPosition)) {
+            buffer.get(relPosition).acked = true;
+        }
+        synchronized (buffer.window) {
+            if (buffer.isWindowAcked())
+                buffer.window.incr(Window.SIZE); // not sure about that
+            else if (relPosition == buffer.window.start()) {
+                for (int i = buffer.window.start(); i <= buffer.window.end(); i++) {
+                    Packet current = buffer.get(i);
+                    if (current == null || !current.acked)
+                        break;
+                    buffer.window.incr(); // move window by 1
+                }
             }
         }
     }

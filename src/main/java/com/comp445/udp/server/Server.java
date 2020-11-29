@@ -198,11 +198,6 @@ public class Server {
                                 }
                             }
                         }
-                        // else {
-                        // synchronized (conn.handler) {
-                        // conn.handler.notify();
-                        // }
-                        // }
                     }
                 }
             }

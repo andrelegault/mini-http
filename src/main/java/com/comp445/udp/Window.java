@@ -11,7 +11,7 @@ public class Window {
         this.bufferSize = bufferSize;
     }
 
-    public synchronized int start() {
+    public int start() {
         return position;
     }
 
@@ -23,11 +23,11 @@ public class Window {
         position = (position + by) % bufferSize;
     }
 
-    public synchronized int end() {
+    public int end() {
         return position + SIZE - 1;
     }
 
-    public synchronized int position() {
+    public int position() {
         return position;
     }
 

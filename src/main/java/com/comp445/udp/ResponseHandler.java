@@ -8,8 +8,6 @@ public class ResponseHandler extends Thread {
      * This object sends a new DATA packet until it's ack'ed.
      */
 
-    // maybe make a counter that checks how many times something was sent, to not
-    // send stuff forever.
     public static final int WAIT_TIME = 500;
     final DatagramChannel channel;
     final Selector selector;
@@ -35,15 +33,14 @@ public class ResponseHandler extends Thread {
             boolean sendAgain = true;
             do {
                 System.out.println("Sending: " + packet);
+                System.out.println("could be deadlocked if this is spammed");
                 channel.send(packet.toBuffer(), Router.ADDRESS);
                 packet.sent = true;
                 Thread.sleep(WAIT_TIME);
-                // selector.select(WAIT_TIME);
-                // synchronized(this) {
-                // wait();
-                // }
 
-                sendAgain = !buffer.get(checkFor).acked;
+                synchronized (buffer) {
+                    sendAgain = !buffer.get(checkFor).acked;
+                }
             } while (sendAgain);
         } catch (Exception e) {
             e.printStackTrace();
