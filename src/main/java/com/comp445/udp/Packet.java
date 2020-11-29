@@ -173,17 +173,28 @@ public class Packet {
 
     @Override
     public String toString() {
-        return String.format("%s #%d peer=%s:%d, size=%d", stringType(), sequenceNumber, peerAddress, peerPort, payload == null ? 0 : payload.length);
+        return String.format("%s #%d peer=%s:%d, size=%d", stringType(), sequenceNumber, peerAddress, peerPort,
+                payload == null ? 0 : payload.length);
     }
 
     private String stringType() {
         String stringType = "";
-        switch(type) {
-            case 0: stringType = "SYN"; break;
-            case 1: stringType = "ACK"; break;
-            case 2: stringType = "SYNACK"; break;
-            case 3: stringType = "NAK"; break;
-            case 4: stringType = "DATA"; break;
+        switch (type) {
+            case 0:
+                stringType = "SYN";
+                break;
+            case 1:
+                stringType = "ACK";
+                break;
+            case 2:
+                stringType = "SYNACK";
+                break;
+            case 3:
+                stringType = "NAK";
+                break;
+            case 4:
+                stringType = "DATA";
+                break;
         }
         return stringType;
     }
