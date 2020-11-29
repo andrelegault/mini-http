@@ -85,8 +85,7 @@ public class RequestHandler extends Thread {
     protected String readLine() throws Exception {
         int c;
         String s = "";
-        // WE SHOULD PAUSE HERE
-        while ((c = in.read()) != -1) {
+        while (in.available() > 0 && (c = in.read()) != -1) {
             if (c == NEWLINE) {
                 break;
             } else {
@@ -126,7 +125,7 @@ public class RequestHandler extends Thread {
         assert (conn.isConnected());
         System.out.println("Launch response handler");
         for (final Packet p : packets)
-            new ResponseHandler(this.channel, this.selector, conn.sent, p).start();
+            new Thread(new ResponseHandler(this.channel, this.selector, conn.sent, p)).start();
         // in.close();
     }
 
@@ -258,7 +257,7 @@ public class RequestHandler extends Thread {
     }
 
     @Override
-    public void start() {
+    public void run() {
         try {
             processRequest();
         } catch (Exception e) {
