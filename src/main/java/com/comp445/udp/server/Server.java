@@ -161,7 +161,6 @@ public class Server {
             final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
 
             for (;;) {
-
                 Packet packet = TCPBase.receivePacket(channel, selector, buf);
                 log("RECEIVED: " + packet);
                 final InetSocketAddress key = getClientSocketAddress(packet.getPeerAddress(), packet.getPeerPort());
@@ -193,9 +192,15 @@ public class Server {
                         if (conn.handler == null) {
                             if (conn.in.available() == 0)
                                 continue;
-                            conn.setHandler(
-                                    new RequestHandler(channel, selector, key, conn.in, this.verbose, this.dataDir));
+                            conn.setHandler(new Thread(
+                                    new RequestHandler(channel, selector, key, conn.in, this.verbose, this.dataDir)));
                             conn.handler.start();
+                        } else {
+                            if (conn.in.available() > 0) {
+                                synchronized (conn.handler) {
+                                    conn.handler.notify();
+                                }
+                            }
                         }
                         // else {
                         // synchronized (conn.handler) {
@@ -232,17 +237,20 @@ public class Server {
             } while (keys.isEmpty());
             // looks like we got a bite!! what is it??
             buf.clear();
+            // theres an overflow here, the channel contains more than a single request
             channel.receive(buf);
             if (buf.remaining() == Packet.MAX_LEN) continue;
 
+            buf.flip();
             ackOrData = Packet.fromBuffer(buf);
+            buf.flip();
             System.out.println("RECEIVED: " + ackOrData);
 
-            // its a SYNACK!! yes!!
             if ((ackOrData.getType() == 1 || ackOrData.getType() == 4) && ackOrData.getSequenceNumber() <= 1) {
                 ackOrDataReceived = true;
             }
         }
+        System.out.println("Client connected!");
         return ackOrData;
     }
 
