@@ -43,7 +43,10 @@ public class TCPBase {
             if (p.getType() == 4) {
                 for (int i = buffer.window.start(); i < buffer.window.end(); i++) {
                     try {
-                        conn.out.write(conn.received.get(i).getPayload());
+                        byte[] data = conn.received.get(i).getPayload();
+                        for (byte b : data)
+                            System.out.write(b);
+                        conn.out.write(data);
                     } catch (IOException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
@@ -52,8 +55,12 @@ public class TCPBase {
             }
             buffer.window.incr(Window.SIZE); // not sure about that
         } else if (p.getSequenceNumber() == buffer.window.position()) {
-            if (p.getType() == 4)
-                conn.out.write(conn.received.get(buffer.window.start()).getPayload());
+            if (p.getType() == 4) {
+                byte[] data = conn.received.get(buffer.window.start()).getPayload();
+                for (byte b : data)
+                    System.out.write(b);
+                conn.out.write(data);
+            }
             buffer.window.incr(); // move window by 1
         }
     }
