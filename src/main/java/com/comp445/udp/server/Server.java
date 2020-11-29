@@ -5,10 +5,12 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.DatagramChannel;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.ConsoleHandler;
@@ -19,6 +21,7 @@ import java.util.logging.SimpleFormatter;
 import com.comp445.udp.Packet;
 import com.comp445.udp.PacketBuffer;
 import com.comp445.udp.RequestHandler;
+import com.comp445.udp.ResponseHandler;
 import com.comp445.udp.Router;
 import com.comp445.udp.TCPBase;
 
@@ -159,14 +162,14 @@ public class Server {
 
             for (;;) {
 
-                final Packet packet = TCPBase.receivePacket(channel, selector, buf);
+                Packet packet = TCPBase.receivePacket(channel, selector, buf);
                 log("RECEIVED: " + packet);
                 final InetSocketAddress key = getClientSocketAddress(packet.getPeerAddress(), packet.getPeerPort());
 
                 Connection conn = connections.get(key);
                 if (conn == null) {
-                    final boolean connected = establishConnection(channel, buf, packet);
-                    if (connected) {
+                    packet = establishConnection(channel, buf, packet);
+                    if (packet != null) {
                         conn = new Connection();
                         conn.setConnected(true);
                         conn.sent = new PacketBuffer();
@@ -203,25 +206,40 @@ public class Server {
         }
     }
 
-    private boolean establishConnection(final DatagramChannel channel, final ByteBuffer buf, Packet syn)
+    private Packet establishConnection(final DatagramChannel channel, final ByteBuffer buf, Packet syn)
             throws IOException {
 
         if (syn.getType() != 0 && syn.getSequenceNumber() != 0L)
-            return false;
+            return null;
 
-        final Packet synAck = syn.toBuilder().setSequenceNumber(1L).setType(2).build();
+        final Packet synAck = syn.toBuilder().setSequenceNumber(1L).setType(2).setPayload(null).build();
 
-        Packet ack;
-        do {
-            channel.send(synAck.toBuffer(), Router.ADDRESS);
-            this.selector.select(5000);
+        channel.send(synAck.toBuffer(), Router.ADDRESS);
+
+        Packet ackOrData = null;
+        boolean ackOrDataReceived = false;
+        while (!ackOrDataReceived) {
+            // try to get a key but wait for a maximum of 5 seconds
+            final Set<SelectionKey> keys = selector.selectedKeys();
+            do {
+                System.out.println("Sending: " + synAck);
+                channel.send(synAck.toBuffer(), Router.ADDRESS);
+                selector.select(ResponseHandler.WAIT_TIME);
+            } while (keys.isEmpty());
+            // looks like we got a bite!! what is it??
             buf.clear();
             channel.receive(buf);
             buf.flip();
-            ack = Packet.fromBuffer(buf);
-        } while (ack.getType() != 1 && ack.getSequenceNumber() != 1L);
 
-        return true;
+            ackOrData = Packet.fromBuffer(buf);
+            System.out.println("RECEIVED: " + ackOrData);
+
+            // its a SYNACK!! yes!!
+            if ((ackOrData.getType() == 1 || ackOrData.getType() == 4) && ackOrData.getSequenceNumber() <= 1) {
+                ackOrDataReceived = true;
+            }
+        }
+        return ackOrData;
     }
 
     private void log(final String output) {

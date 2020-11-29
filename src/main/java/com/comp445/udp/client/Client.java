@@ -327,7 +327,7 @@ public class Client {
             do {
                 System.out.println("Sending: " + syn);
                 channel.send(syn.toBuffer(), Router.ADDRESS);
-                selector.select(5000);
+                selector.select(ResponseHandler.WAIT_TIME);
             } while (keys.isEmpty());
             // looks like we got a bite!! what is it??
             buf.clear();
@@ -346,7 +346,7 @@ public class Client {
         // why am definitely ack'ing this!!
         final Packet ack = syn.toBuilder().setType(1).setSequenceNumber(1L).build();
 
-        System.out.println("Sending: " + ack);
+        System.out.println("Sending: " + ack + " (which doesn't matter)");
         channel.send(ack.toBuffer(), Router.ADDRESS);
         // selector.selectedKeys().clear();
     }

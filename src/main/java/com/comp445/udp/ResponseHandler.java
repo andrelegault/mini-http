@@ -10,7 +10,7 @@ public class ResponseHandler extends Thread {
 
     // maybe make a counter that checks how many times something was sent, to not
     // send stuff forever.
-    private static final int WAIT_TIME = 5000;
+    public static final int WAIT_TIME = 2500;
     final DatagramChannel channel;
     final Selector selector;
     final Packet packet;
@@ -38,7 +38,7 @@ public class ResponseHandler extends Thread {
                 channel.send(packet.toBuffer(), Router.ADDRESS);
                 packet.sent = true;
                 // Thread.sleep(5000);
-                selector.select(5000);
+                selector.select(WAIT_TIME);
                 // synchronized(this) {
                 //     wait();
                 // }
