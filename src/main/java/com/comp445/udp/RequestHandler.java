@@ -2,8 +2,12 @@ package com.comp445.udp;
 
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.DatagramChannel;
+import java.nio.channels.Selector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import com.comp445.udp.server.Connection;
 import com.comp445.udp.server.Response;
 import com.comp445.udp.server.Server;
 
@@ -26,13 +31,18 @@ public class RequestHandler extends Thread {
     private final boolean verbose;
     private final Path dataDir;
     private final InputStream in;
-    private final InetAddress peer;
+    private final InetSocketAddress peer;
+    private final Selector selector;
+    private final DatagramChannel channel;
     private final static int NEWLINE = 0x0A;
 
-    public RequestHandler(final InetAddress peer, final InputStream in, final boolean verbose, final Path dataDir) {
+    public RequestHandler(final DatagramChannel channel, final Selector selector, final InetSocketAddress peer,
+            final InputStream in, final boolean verbose, final Path dataDir) {
         System.out.println("New serverThread created!!");
         this.verbose = verbose;
         this.dataDir = dataDir;
+        this.channel = channel;
+        this.selector = selector;
         this.in = in;
         this.peer = peer;
     }
@@ -82,7 +92,8 @@ public class RequestHandler extends Thread {
             } else {
                 s += (char) c + "";
             }
-            if (in.available() == 0) wait();
+            if (in.available() == 0)
+                wait();
         }
         return s;
     }
@@ -106,22 +117,13 @@ public class RequestHandler extends Thread {
             log("Request processed!");
         }
 
-        final String sent = res.toString();
-        System.out.println(res.toString());
-        final byte[] bytes = res.body;
-
-        // out.write(sent.getBytes());
-        // if (bytes != null) {
-        // for (final byte b : bytes) {
-        // out.write((char) (b & 0xFF));
-        // }
-        // }
-
-        if (verbose) {
-            log("Response sent to " + peer);
-            System.out.println(sent + "\n");
-        }
-
+        final Packet[] packets = Packet.toArray(ByteBuffer.wrap(res.toBytes()).order(ByteOrder.BIG_ENDIAN),
+                peer.getAddress(), peer.getPort());
+        final Connection conn = Server.connections.get(peer);
+        assert (conn.isConnected());
+        System.out.println("Launch response handler");
+        for(final Packet p : packets)
+            new ResponseHandler(this.channel, this.selector, conn.sent, p).start(); 
         // in.close();
     }
 

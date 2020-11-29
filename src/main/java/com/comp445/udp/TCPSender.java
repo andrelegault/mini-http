@@ -36,8 +36,8 @@ public class TCPSender {
     // multi-threaded)
     //
     // basically sets the acked attribute of a packet.
-    public static void process(PacketBuffer buffer, Packet p) {
-        final long position = p.getSequenceNumber() - 2;
-        buffer.get(position).acked = true;
+    public static void process(PacketBuffer buffer, long relPosition) {
+        System.out.println("sent[" + relPosition + "].acked is now true");
+        buffer.get(relPosition).acked = true;
     }
 }

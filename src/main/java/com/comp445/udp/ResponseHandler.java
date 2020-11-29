@@ -14,7 +14,7 @@ public class ResponseHandler extends Thread {
     final DatagramChannel channel;
     final Selector selector;
     final Packet packet;
-    final long checkFor;
+    long checkFor;
     final PacketBuffer buffer;
 
     public ResponseHandler(final DatagramChannel channel, final Selector selector, final PacketBuffer buffer,
@@ -22,22 +22,30 @@ public class ResponseHandler extends Thread {
         this.channel = channel;
         this.selector = selector;
         this.packet = packet;
-        this.checkFor = packet.getSequenceNumber() - 1;// -2 b/c of 2 starting packets and +1 because its receiver sends
-                                                       // back ack=seq+1
+        this.checkFor = packet.getSequenceNumber();
         this.buffer = buffer;
     }
 
     @Override
     public void run() {
         try {
+            synchronized (buffer) {
+                buffer.set(checkFor, packet);
+            }
             boolean sendAgain = true;
             do {
-                System.out.println("Sending data packet!");
+                System.out.println("Sending: " + packet);
                 channel.send(packet.toBuffer(), Router.ADDRESS);
                 packet.sent = true;
-                selector.select(ResponseHandler.WAIT_TIME);
+                Thread.sleep(5000);
+                // selector.select(100);
+                // synchronized(this) {
+                //     wait();
+                // }
 
-                sendAgain = buffer.get(checkFor).acked;
+                synchronized (buffer) {
+                    sendAgain = !buffer.get(checkFor).acked;
+                }
             } while (sendAgain);
         } catch (Exception e) {
             e.printStackTrace();

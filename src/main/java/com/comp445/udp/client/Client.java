@@ -23,6 +23,7 @@ import com.comp445.udp.Router;
 import com.comp445.udp.TCPBase;
 import com.comp445.udp.TCPSender;
 import com.comp445.udp.Window;
+import com.comp445.udp.server.Connection;
 
 import java.net.InetAddress;
 import java.net.URL;
@@ -36,6 +37,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import static java.nio.channels.SelectionKey.OP_WRITE;
 import static java.nio.channels.SelectionKey.OP_READ;
 
 public class Client {
@@ -95,7 +97,10 @@ public class Client {
 
     private final Logger logger = Logger.getLogger("CLIENT");
 
-    private Selector selector;
+    private Selector readLock;
+    private Selector writeLock;
+
+    public static Connection conn;
 
     /**
      * In TCP, every sender has a receiver.
@@ -112,13 +117,8 @@ public class Client {
      */
 
     // Holds the packets that need to be ack'ed by the remote server.
-    public static volatile PacketBuffer sent;
 
     // Holds the packets that need to be ack'ed by this instance.
-    public static volatile PacketBuffer received;
-
-    public PipedOutputStream out;
-    public PipedInputStream in;
 
     /**
      * Constructor.
@@ -128,9 +128,8 @@ public class Client {
      */
     public Client(final String[] args) {
         this.args = args;
-        out = new PipedOutputStream();
         try {
-            in = new PipedInputStream(out);
+            conn = new Connection();
             parse();
             run();
         } catch (Exception e) {
@@ -320,19 +319,19 @@ public class Client {
 
         final Packet syn = new Packet.Builder().setType(0).setSequenceNumber(0L).setPortNumber(this.target.getPort())
                 .setPeerAddress(InetAddress.getByName(this.target.getHost())).build();
+        final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
 
         boolean synAckReceived = false;
         while (!synAckReceived) {
-            System.out.println("nope");
             // try to get a key but wait for a maximum of 5 seconds
-            final Set<SelectionKey> keys = selector.selectedKeys();
+            final Set<SelectionKey> keys = readLock.selectedKeys();
             do {
+                System.out.println("Sending: " + syn);
                 channel.send(syn.toBuffer(), Router.ADDRESS);
-                selector.select(5000);
+                readLock.select(5000);
             } while (keys.isEmpty());
             // looks like we got a bite!! what is it??
-
-            final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN);
+            buf.clear();
             channel.receive(buf);
             buf.flip();
 
@@ -345,57 +344,49 @@ public class Client {
         }
 
         // why am definitely ack'ing this!!
-        final Packet ack = syn.toBuilder().setType(1).setSequenceNumber(2L).build();
+        final Packet ack = syn.toBuilder().setType(1).setSequenceNumber(1L).build();
 
+        System.out.println("Sending: " + ack);
         channel.send(ack.toBuffer(), Router.ADDRESS);
-        selector.selectedKeys().clear();
+        readLock.selectedKeys().clear();
     }
 
     private void connect() throws IOException {
-        this.selector = Selector.open();
+        this.readLock = Selector.open();
+        this.writeLock = Selector.open();
         try (DatagramChannel channel = DatagramChannel.open()) {
             channel.configureBlocking(false);
-            channel.register(selector, OP_READ);
+            channel.register(readLock, OP_READ);
+            channel.register(writeLock, OP_WRITE);
+
             establishConnection(channel);
             logger.info("Connection established!");
 
             final Packet[] packets = Packet.toArray(ByteBuffer.wrap(this.req.toBytes()).order(ByteOrder.BIG_ENDIAN),
-                    this.target.getHost(), this.target.getPort());
-            sent = new PacketBuffer(packets);
+                    InetAddress.getByName(this.target.getHost()), this.target.getPort());
+            conn.sent = new PacketBuffer(packets);
+
+            final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN);
 
             for (;;) {
-                TCPSender.sendOutstanding(channel, selector, Client.sent);
-                final Packet p = receivePacket(channel);
-                System.out.println(new String(p.getPayload()));
-                TCPBase.process(Client.sent, p, out, true);
-                // do {
-                // sendPacket(packet, Router.ADDRESS);
-                // selector.select(5000);
-                // } while (keys.isEmpty());
-                // final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN);
-                // channel.receive(buf);
-                // buf.flip();
-
-                // final Packet resp = Packet.fromBuffer(buf);
-
-                // // is valid response
-                // if (resp.getSequenceNumber() == packet.getSequenceNumber()) {
-                // System.out.println("valid response!");
-                // // server is listening
-                // } else {
-                // System.out.println("Invalid response!");
-                // }
-
+                TCPSender.sendOutstanding(channel, readLock, conn.sent);
+                final Packet p = receivePacket(buf, channel);
+                System.out.println("Received: " + p);
+                TCPBase.process(conn, p, conn.out);
+                if (p.getType() == 4) {
+                    Packet ack = Packet.buildAck(p);
+                    System.out.println("Sending: " + ack);
+                    channel.send(ack.toBuffer(), Router.ADDRESS);
+                }
             }
         }
     }
 
-    private Packet receivePacket(final DatagramChannel channel) throws IOException {
-        final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
-        selector.select();
+    private Packet receivePacket(final ByteBuffer buf, final DatagramChannel channel) throws IOException {
+        buf.clear();
+        readLock.select();
         channel.receive(buf);
-        System.out.println("Received packet!");
-        // buf.flip();
+        buf.flip();
         return Packet.fromBuffer(buf);
     }
 

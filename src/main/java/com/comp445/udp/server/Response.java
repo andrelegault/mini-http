@@ -160,6 +160,20 @@ public class Response {
         return builder.toString();
     }
 
+    public byte[] toBytes() {
+        final byte[] headers = toString().getBytes();
+        final byte[] bytes = new byte[headers.length + (body != null ? body.length : 0)];
+        for (int i = 0; i < headers.length; i++)
+            bytes[i] = headers[i];
+        if (body != null) {
+            System.out.println("body: " + body.length + ", headers: " + headers.length + ", bytes: " + bytes.length);
+            for (int i = 0; i < body.length; i++)
+                bytes[headers.length + i] = body[i];
+        }
+        return bytes;
+
+    }
+
     private String getDate() {
         return Response.dateFormat.format(new Date());
     }

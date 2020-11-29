@@ -154,7 +154,7 @@ public class Packet {
         return p.toBuilder().setType(1).setSequenceNumber(seq + 1).setPayload(null).build();
     }
 
-    public static Packet[] toArray(ByteBuffer buf, String host, int port) throws UnknownHostException {
+    public static Packet[] toArray(ByteBuffer buf, InetAddress peerAddress, int port) throws UnknownHostException {
         final int maxPayloadSize = Packet.MAX_LEN - Packet.MIN_LEN; // 1013
         final int numPackets = (int) Math.ceil((double) buf.capacity() / (maxPayloadSize));
         final Packet[] segmented = new Packet[numPackets];
@@ -165,15 +165,27 @@ public class Packet {
             buf.get(chunk);
             // Here we're using i+1 because the first 1 sequence nubmers are reserved for
             // the handshake
-            segmented[i] = new Packet.Builder().setType(4).setSequenceNumber(i + 1).setPortNumber(port)
-                    .setPeerAddress(InetAddress.getByName(host)).setPayload(chunk).build();
+            segmented[i] = new Packet.Builder().setType(4).setSequenceNumber(i).setPortNumber(port)
+                    .setPeerAddress(peerAddress).setPayload(chunk).build();
         }
         return segmented;
     }
 
     @Override
     public String toString() {
-        return String.format("#%d peer=%s:%d, size=%d", sequenceNumber, peerAddress, peerPort, payload.length);
+        return String.format("%s #%d peer=%s:%d, size=%d", stringType(), sequenceNumber, peerAddress, peerPort, payload == null ? 0 : payload.length);
+    }
+
+    private String stringType() {
+        String stringType = "";
+        switch(type) {
+            case 0: stringType = "SYN"; break;
+            case 1: stringType = "ACK"; break;
+            case 2: stringType = "SYNACK"; break;
+            case 3: stringType = "NAK"; break;
+            case 4: stringType = "DATA"; break;
+        }
+        return stringType;
     }
 
     public static class Builder {

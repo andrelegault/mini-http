@@ -2,13 +2,13 @@ package com.comp445.udp;
 
 import java.io.IOException;
 import java.io.PipedOutputStream;
+import java.nio.channels.DatagramChannel;
 
 public class TCPReceiver {
 
     // TODO: only process data
-    public static void process(PacketBuffer buffer, Packet p, PipedOutputStream out, boolean isClient) {
+    public static void process(PacketBuffer buffer, Packet p, PipedOutputStream out) {
         long seq = p.getSequenceNumber();
-        if (!isClient) seq -=1;
         if (p.getPayload() == null || buffer.get(seq) != null) // no data or already processed
             return;
 
