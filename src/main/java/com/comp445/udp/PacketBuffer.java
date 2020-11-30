@@ -46,7 +46,11 @@ public class PacketBuffer {
         buffer[(int) i] = p;
     }
 
-    public synchronized void incr() {
+    public boolean isAllAcked() {
+        for(Packet p : this.buffer) {
+            if (!p.acked) return false;
+        }
+        return true;
     }
 
     public synchronized boolean canConsumeWindow() {

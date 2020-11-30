@@ -10,6 +10,7 @@ import java.nio.channels.Selector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -200,11 +201,54 @@ public class Server {
                             }
                         }
                     }
+                    if (conn.sent.isAllAcked()) {
+                        closeHandshake(channel, key);
+                        channel.close();
+                        break;
+                    }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void closeHandshake(final DatagramChannel channel, InetSocketAddress address) throws IOException {
+        final int randomSeq = new Random().nextInt(1000);
+        final Packet fin = new Packet.Builder().setType(5).setSequenceNumber(randomSeq)
+                .setPeerAddress(address.getAddress()).setPortNumber(address.getPort()).setPayload(null).build();
+
+        final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
+        channel.send(fin.toBuffer(), Router.ADDRESS);
+
+        Packet ack = null;
+        boolean ackReceived = false;
+        while (!ackReceived) {
+            // try to get a key but wait for a maximum of 5 seconds
+            final Set<SelectionKey> keys = selector.selectedKeys();
+            do {
+                System.out.println("(closing) Received " + ack);
+                channel.send(fin.toBuffer(), Router.ADDRESS);
+                selector.select(ResponseHandler.WAIT_TIME);
+            } while (keys.isEmpty());
+            // looks like we got a bite!! what is it??
+            buf.clear();
+            // theres an overflow here, the channel contains more than a single request
+            channel.receive(buf);
+            if (buf.remaining() == Packet.MAX_LEN)
+                continue;
+
+            buf.flip();
+            ack = Packet.fromBuffer(buf);
+            buf.flip();
+            System.out.println("(closing) RECEIVED: " + ack);
+
+            if ((ack.getType() == 5) && ack.getSequenceNumber() == fin.getSequenceNumber() + 1) {
+                ackReceived = true;
+            }
+        }
+        System.out.println("Client knows we're trying to disconnect!");
+        channel.send(ack.toBuffer(), Router.ADDRESS);
     }
 
     private Packet establishConnection(final DatagramChannel channel, final ByteBuffer buf, Packet syn)
@@ -249,13 +293,6 @@ public class Server {
 
     private void log(final String output) {
         System.out.println("[localhost:" + this.port + "] => " + output);
-    }
-
-    private void processRequest() throws Exception {
-        // https://www.baeldung.com/udp-in-java
-        // TODO: replace `accept` with 3-way handshake
-        // final Socket socket = datagramSocket.accept();
-        // new Thread(new ServerThread(socket, verbose, dataDir)).start();
     }
 
     public static void main(String[] args) {

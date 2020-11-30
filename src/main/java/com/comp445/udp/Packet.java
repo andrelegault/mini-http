@@ -30,6 +30,8 @@ public class Packet {
      * 3 indicates a NAK packet.
      * 
      * 4 indicates a DATA packet.
+     * 
+     * 5 indicates a FIN
      */
     private final int type;
     private final long sequenceNumber;
@@ -150,6 +152,7 @@ public class Packet {
     }
 
     public static Packet buildAck(Packet p) {
+        // no need to change peer as it's done by the router
         long seq = p.getSequenceNumber();
         return p.toBuilder().setType(1).setSequenceNumber(seq + 1).setPayload(null).build();
     }

@@ -376,6 +376,9 @@ public class Client {
                     if (conn.in.available() == 0)
                         break;
                 }
+                if (p.getType() == 5) { // server is trying to close, means we acked everything it sent
+                    Packet fin = Packet.buildAck(p);
+                }
             }
         }
     }
