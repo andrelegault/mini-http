@@ -147,7 +147,6 @@ public class Server {
     }
 
     private void run() {
-        // TODO: when everything is acked (in sent), close the connection via FIN...
         try (DatagramChannel channel = DatagramChannel.open()) {
             channel.configureBlocking(false);
             selector = Selector.open();
@@ -164,7 +163,7 @@ public class Server {
 
                 Connection conn = connections.get(key);
                 if (conn == null) {
-                    packet = establishConnection(channel, buf, packet);
+                    packet = establishConnection(channel, packet);
                     buf.flip();
                     if (packet != null) {
                         conn = new Connection();
@@ -184,7 +183,6 @@ public class Server {
                         log("Sending " + resp);
                         channel.send(resp.toBuffer(), Router.ADDRESS);
 
-                        // have NOT yet tested for multiple-packet requests
                         // initialized thread handling DATA request
                         if (conn.handler == null) {
                             if (conn.in.available() == 0)
@@ -207,8 +205,8 @@ public class Server {
         }
     }
 
-    private Packet establishConnection(final DatagramChannel channel, final ByteBuffer buf, Packet syn)
-            throws IOException {
+    private Packet establishConnection(final DatagramChannel channel, Packet syn) throws IOException {
+        final ByteBuffer buf = ByteBuffer.allocate(Packet.MAX_LEN).order(ByteOrder.BIG_ENDIAN);
 
         if (syn.getType() != 0 && syn.getSequenceNumber() != 0L)
             return null;
@@ -249,13 +247,6 @@ public class Server {
 
     private void log(final String output) {
         System.out.println("[localhost:" + this.port + "] => " + output);
-    }
-
-    private void processRequest() throws Exception {
-        // https://www.baeldung.com/udp-in-java
-        // TODO: replace `accept` with 3-way handshake
-        // final Socket socket = datagramSocket.accept();
-        // new Thread(new ServerThread(socket, verbose, dataDir)).start();
     }
 
     public static void main(String[] args) {
