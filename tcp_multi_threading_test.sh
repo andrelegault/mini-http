@@ -1,5 +1,5 @@
 #!/bin/bash
-PATH_TO_JAR="httpc/target/httpc-1.0-SNAPSHOT-jar-with-dependencies.jar"
+PATH_TO_CLIENT_JAR="httpc/target/httpc-1.0-SNAPSHOT-jar-with-dependencies.jar"
 GET_OPTIONS="get http://localhost:8080/test.txt &"
 POST_OPTIONS="post -d \"Hello World!\" http://localhost:8080/threading.txt &"
 GET_COMMAND="java -jar ${PATH_TO_JAR} ${GET_OPTIONS}"
