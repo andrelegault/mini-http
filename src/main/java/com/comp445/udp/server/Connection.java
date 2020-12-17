@@ -10,7 +10,16 @@ public class Connection {
     /**
      * A single request (potentially formed of multiple packets) needs a state. This
      * is the class representing this state.
+     * 
+     * We use a static size limit because the main server thread will be blocked in
+     * order to pause execution when writing to the stream.
+     * 
+     * The following code sample displays an example of the phenomenon:
+     * https://pastebin.com/ppUGNuEu
      */
+
+    /// We don't support files over 1MB
+    private static final int MAX_FILE_SIZE_IN_BYTES = 1048576;
 
     private boolean connected = false;
 
@@ -28,7 +37,7 @@ public class Connection {
 
     public Connection() throws IOException {
         out = new PipedOutputStream();
-        in = new PipedInputStream(out);
+        in = new PipedInputStream(out, MAX_FILE_SIZE_IN_BYTES);
     }
 
     public void setHandler(Thread handler) {

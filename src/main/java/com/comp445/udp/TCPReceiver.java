@@ -18,6 +18,10 @@ public class TCPReceiver {
                     if (current == null)
                         break;
                     try {
+                        /// the issue is that we need to have the reader thread consume some amount of
+                        /// bytes before being able to write further to it
+                        /// otherwise it results in `out.write(...)` blocking
+
                         out.write(current.getPayload());
                     } catch (IOException e) {
                         e.printStackTrace();
