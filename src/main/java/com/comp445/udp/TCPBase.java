@@ -26,7 +26,7 @@ public class TCPBase {
         final int type = p.getType();
         if (type == 1) { // ACK
             TCPSender.process(conn.sent, p);
-        } else if (type == 4) {// DATA
+        } else if (type == 4) { // DATA
             TCPReceiver.process(conn.received, p, conn.out);
         } else
             return;
