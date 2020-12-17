@@ -48,3 +48,5 @@ instructions*.pdf
 *org.eclipse.*
 
 .settings
+
+DATA/
